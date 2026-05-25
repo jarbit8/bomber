@@ -10,6 +10,10 @@ import mss
 import json
 import time
 import urllib.request
+import ssl
+_SSL_CTX = ssl.create_default_context()
+_SSL_CTX.check_hostname = False
+_SSL_CTX.verify_mode = ssl.CERT_NONE
 from datetime import datetime
 from pathlib import Path
 
@@ -23,7 +27,7 @@ def push_firebase(scores: dict):
             FIREBASE_URL, data=data, method="PUT",
             headers={"Content-Type": "application/json"}
         )
-        urllib.request.urlopen(req, timeout=5)
+        urllib.request.urlopen(req, timeout=5, context=_SSL_CTX)
     except Exception as e:
         print(f"[Firebase] Error: {e}", flush=True)
 
@@ -45,8 +49,9 @@ CROWN_HSV_HI = np.array([38, 255, 255])
 BOARD_HSV_LO = np.array([48,  80,  60])
 BOARD_HSV_HI = np.array([88, 255, 170])
 
-CROWN_MIN_PX = 30
-CAPTURE_SECS = 0.5
+CROWN_MIN_PX  = 50      # mas pixeles requeridos para contar corona
+CAPTURE_SECS  = 0.5
+COOLDOWN_SECS = 3.0     # minimo segundos entre puntos del mismo jugador
 
 # ── Tabla de cuotas exactas (precalculada con DP) ─────────────────────────────
 def load_tabla() -> dict:
@@ -95,7 +100,7 @@ def log(msg: str):
 def is_scoreboard(frame_bgr: np.ndarray) -> bool:
     hsv  = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, BOARD_HSV_LO, BOARD_HSV_HI)
-    return mask.sum() / (frame_bgr.shape[0] * frame_bgr.shape[1] * 255) > 0.12
+    return mask.sum() / (frame_bgr.shape[0] * frame_bgr.shape[1] * 255) > 0.20
 
 def find_board(frame_bgr: np.ndarray):
     hsv  = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2HSV)
@@ -144,8 +149,11 @@ def main():
     print("=" * 55)
 
     scores = load_scores()
-    prev   = {p: 0 for p in range(1, 6)}
+    push_firebase(scores)   # publica estado inicial al arrancar
+    log("Estado inicial enviado a Firebase")
+    prev              = {p: 0 for p in range(1, 6)}
     scored_this_board: set = set()
+    last_scored_time  = {}   # pnum -> timestamp ultimo punto
     visible = False
 
     with mss.mss() as sct:
@@ -166,11 +174,14 @@ def main():
                         visible           = True
 
                     for pnum, cnt in crowns.items():
-                        if cnt > prev.get(pnum, 0) and pnum not in scored_this_board:
+                        now = time.time()
+                        en_cooldown = (now - last_scored_time.get(pnum, 0)) < COOLDOWN_SECS
+                        if cnt > prev.get(pnum, 0) and pnum not in scored_this_board and not en_cooldown:
                             id_   = str(pnum)
                             name  = scores[id_]["name"]
                             scores[id_]["points"] += 1
                             scored_this_board.add(pnum)
+                            last_scored_time[pnum] = time.time()
 
                             # Cuotas exactas desde la tabla DP
                             old_odds = {i: scores[str(i)]["odds"] for i in range(1, 6)}
