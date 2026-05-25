@@ -1,0 +1,7 @@
+{
+  "1": {"name": "Sergio",  "points": 0, "odds": 1.50, "history": []},
+  "2": {"name": "Joel",    "points": 0, "odds": 2.20, "history": []},
+  "3": {"name": "Gonzalo", "points": 0, "odds": 3.70, "history": []},
+  "4": {"name": "Gallo",   "points": 0, "odds": 7.00, "history": []},
+  "5": {"name": "Parce",   "points": 0, "odds": 70.00, "history": []}
+}

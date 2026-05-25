@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bomberman 4 — Marcador</title>
+<style>
+  :root {
+    --bg:    #0f1117;
+    --card:  #1a1d27;
+    --bord:  #2a2d3a;
+    --gold:  #f5a623;
+    --green: #00c853;
+    --red:   #ff3d57;
+    --blue:  #2979ff;
+    --text:  #e8eaf0;
+    --muted: #6b7280;
+    --acc:   #7c3aed;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 28px 16px;
+  }
+
+  header { text-align: center; margin-bottom: 36px; }
+  header h1 {
+    font-size: 2.1rem; font-weight: 900; letter-spacing: 3px;
+    background: linear-gradient(90deg,#f5a623,#ff6b35,#f5a623);
+    background-size: 200%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: shimmer 3s linear infinite;
+  }
+  @keyframes shimmer { to { background-position: 200% center; } }
+  header p { color: var(--muted); font-size: 0.85rem; margin-top: 5px; }
+  .dot {
+    display: inline-block; width: 8px; height: 8px;
+    background: var(--green); border-radius: 50%; margin-right: 6px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--bord);
+    border-radius: 18px;
+    padding: 22px 18px 18px;
+    position: relative;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 10px 36px rgba(0,0,0,.55); }
+  .card.leader { border-color: var(--gold); box-shadow: 0 0 24px rgba(245,166,35,.28); }
+
+  .rank {
+    position: absolute; top: 14px; right: 14px;
+    font-size: .68rem; font-weight: 700;
+    padding: 2px 9px; border-radius: 99px;
+    background: var(--bord); color: var(--muted);
+  }
+  .card.leader .rank { background: var(--gold); color: #000; }
+
+  .pname { font-size: 1.15rem; font-weight: 800; margin-bottom: 16px; }
+
+  .prog-label {
+    display: flex; justify-content: space-between;
+    font-size: .72rem; color: var(--muted); margin-bottom: 5px;
+  }
+  .track {
+    background: var(--bord); border-radius: 99px;
+    height: 7px; overflow: hidden; margin-bottom: 16px;
+  }
+  .fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--blue), var(--acc));
+    transition: width .7s ease;
+  }
+  .card.leader .fill { background: linear-gradient(90deg,var(--gold),#ff6b35); }
+
+  .crowns { display: flex; gap: 5px; margin-bottom: 20px; }
+  .cr { font-size: 1.25rem; filter: grayscale(1) opacity(.25); transition: filter .4s; }
+  .cr.on { filter: none; }
+
+  .odds-box {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .odds-lbl { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; }
+  .odds-val  { font-size: 1.75rem; font-weight: 900; color: var(--gold); }
+  .odds-chg  { font-size: .72rem; font-weight: 700; margin-top: 2px; }
+  .up   { color: var(--red); }
+  .dn   { color: var(--green); }
+  .flat { color: var(--muted); }
+
+  footer { text-align: center; margin-top: 32px; color: var(--muted); font-size: .74rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💣 BOMBERMAN 4</h1>
+  <p><span class="dot"></span>En vivo · Firebase Realtime</p>
+</header>
+
+<div class="grid" id="grid"></div>
+<footer id="ft">Conectando a Firebase…</footer>
+
+<script type="module">
+  import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const app = initializeApp({
+    databaseURL: "https://bomber-3a196-default-rtdb.firebaseio.com"
+  });
+  const db = getDatabase(app);
+
+  const WIN_GOAL = 5;
+  let prevOdds = {};
+
+  function render(scores) {
+    if (!scores) {
+      document.getElementById('ft').textContent = "Sin datos — inicia el detector.";
+      return;
+    }
+
+    const byPts  = Object.keys(scores).sort((a,b) => scores[b].points - scores[a].points);
+    const leader = scores[byPts[0]].points > 0 ? byPts[0] : null;
+    const grid   = document.getElementById('grid');
+    grid.innerHTML = '';
+
+    for (const id of Object.keys(scores).sort((a,b) => +a - +b)) {
+      const { name, points } = scores[id];
+      const odd  = scores[id].odds ?? 1.01;
+      const prev = prevOdds[id];
+      const rank = byPts.indexOf(id) + 1;
+      const isL  = leader === id;
+
+      let chgTxt = '—', chgCls = 'flat';
+      if (prev !== undefined && prev !== odd) {
+        if (odd < prev) { chgTxt = `▼ ${(prev - odd).toFixed(2)}`; chgCls = 'dn'; }
+        else            { chgTxt = `▲ ${(odd - prev).toFixed(2)}`; chgCls = 'up'; }
+      }
+
+      const crs = Array.from({length: WIN_GOAL}, (_, i) =>
+        `<span class="cr ${i < points ? 'on' : ''}">👑</span>`).join('');
+      const pct = Math.min(100, (points / WIN_GOAL) * 100);
+
+      grid.innerHTML += `
+        <div class="card ${isL ? 'leader' : ''}">
+          <div class="rank">#${rank}</div>
+          <div class="pname">${name}</div>
+          <div class="prog-label"><span>${points} pts</span><span>Meta: ${WIN_GOAL}</span></div>
+          <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+          <div class="crowns">${crs}</div>
+          <div class="odds-box">
+            <div>
+              <div class="odds-lbl">Cuota</div>
+              <div class="odds-chg ${chgCls}">${chgTxt}</div>
+            </div>
+            <div class="odds-val">${odd.toFixed(2)}x</div>
+          </div>
+        </div>`;
+    }
+
+    for (const id in scores) prevOdds[id] = scores[id].odds;
+    document.getElementById('ft').textContent =
+      `Última actualización: ${new Date().toLocaleTimeString('es')}`;
+  }
+
+  onValue(ref(db, "scores"), snap => render(snap.val()));
+</script>
+</body>
+</html>
