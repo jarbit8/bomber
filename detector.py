@@ -53,6 +53,16 @@ def push_firebase(scores: dict):
     except Exception as e:
         print(f"  [Firebase ERROR] {e}", flush=True)
 
+def fetch_firebase():
+    """Lee el estado actual de Firebase. Devuelve None si falla."""
+    try:
+        req = urllib.request.Request(FIREBASE_URL, method="GET")
+        with urllib.request.urlopen(req, timeout=6, context=_CTX) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print(f"  [Firebase GET ERROR] {e}", flush=True)
+        return None
+
 # ── Scores / Players ──────────────────────────────────────────────────────────
 def load_scores() -> dict:
     if SCORES_FILE.exists():
@@ -228,6 +238,15 @@ def main():
                     log("Scoreboard cerrado")
                     scored_set  = set()
                     prev_crowns = {}
+                    # Sincroniza desde Firebase por si la web reseteo
+                    fb = fetch_firebase()
+                    if fb:
+                        fb_total    = sum(fb[str(p)]["points"] for p in range(1, 6))
+                        local_total = sum(scores[str(p)]["points"] for p in range(1, 6))
+                        if fb_total < local_total:
+                            log("Reset detectado desde web -> sincronizando")
+                            scores = fb
+                            save_scores(scores)
                 visible       = False
                 confirm_count = 0
 

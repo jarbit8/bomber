@@ -125,6 +125,26 @@
   .flat { color: var(--muted); }
 
   footer { text-align: center; margin-top: 32px; color: var(--muted); font-size: .74rem; }
+
+  .reset-btn {
+    display: block;
+    margin: 24px auto 0;
+    padding: 10px 24px;
+    background: transparent;
+    border: 1px solid var(--bord);
+    color: var(--muted);
+    border-radius: 99px;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .reset-btn:hover {
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
+  }
 </style>
 </head>
 <body>
@@ -135,12 +155,13 @@
 </header>
 
 <div class="grid" id="grid"></div>
+<button class="reset-btn" id="resetBtn">RESET TODO</button>
 <footer id="ft">Conectando…</footer>
 
 <script type="module">
   import { initializeApp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue }
+  import { getDatabase, ref, onValue, get, set }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const app = initializeApp({
@@ -205,6 +226,33 @@
   }
 
   onValue(ref(db, "scores"), snap => render(snap.val()));
+
+  // ── Boton de reset ─────────────────────────────────────────────────────
+  document.getElementById('resetBtn').addEventListener('click', async () => {
+    if (!confirm("Resetear TODOS los puntajes a 0?")) return;
+    try {
+      const snap    = await get(ref(db, "scores"));
+      const current = snap.val() || {};
+      const reset   = {};
+      // Cuotas iniciales del modelo (K=0.5)
+      const CUOTAS  = [2.38, 3.17, 6.35, 9.52, 19.05];
+      for (let i = 1; i <= 5; i++) {
+        const id  = String(i);
+        const cur = current[id] || {};
+        reset[id] = {
+          name:    cur.name  || `Jugador${i}`,
+          color:   cur.color || "?",
+          points:  0,
+          odds:    cur.odds  || CUOTAS[i - 1],
+          history: []
+        };
+      }
+      await set(ref(db, "scores"), reset);
+      prevOdds = {};
+    } catch (e) {
+      alert("Error: " + e.message);
+    }
+  });
 </script>
 </body>
 </html>
