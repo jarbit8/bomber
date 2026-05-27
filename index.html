@@ -234,16 +234,14 @@
       const snap    = await get(ref(db, "scores"));
       const current = snap.val() || {};
       const reset   = {};
-      // Cuotas iniciales del modelo (K=0.5)
-      const CUOTAS  = [2.38, 3.17, 6.35, 9.52, 19.05];
-      for (let i = 1; i <= 5; i++) {
-        const id  = String(i);
-        const cur = current[id] || {};
+      // Solo resetea los slots que existen (jugadores activos)
+      for (const id of Object.keys(current)) {
+        const cur = current[id];
         reset[id] = {
-          name:    cur.name  || `Jugador${i}`,
+          name:    cur.name  || `Jugador${id}`,
           color:   cur.color || "?",
           points:  0,
-          odds:    cur.odds  || CUOTAS[i - 1],
+          odds:    cur.odds  || 5.0,
           history: []
         };
       }

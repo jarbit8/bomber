@@ -1,37 +1,37 @@
 {
   "1": {
-    "name": "Gonzalo",
+    "name": "gonzalo",
     "color": "Blanco",
-    "points": 0,
-    "odds": 2.38,
-    "history": []
-  },
-  "2": {
-    "name": "a",
-    "color": "Negro",
-    "points": 0,
-    "odds": 3.17,
-    "history": []
-  },
-  "3": {
-    "name": "b",
-    "color": "Rojo",
     "points": 0,
     "odds": 6.35,
     "history": []
   },
+  "2": {
+    "name": "sergio",
+    "color": "Negro",
+    "points": 0,
+    "odds": 2.38,
+    "history": []
+  },
+  "3": {
+    "name": "joel",
+    "color": "Rojo",
+    "points": 0,
+    "odds": 3.17,
+    "history": []
+  },
   "4": {
-    "name": "c",
+    "name": "parce",
     "color": "Azul",
     "points": 0,
-    "odds": 9.52,
+    "odds": 19.05,
     "history": []
   },
   "5": {
-    "name": "d",
+    "name": "gallo",
     "color": "Verde",
     "points": 0,
-    "odds": 19.05,
+    "odds": 9.52,
     "history": []
   }
 }

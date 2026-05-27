@@ -28,12 +28,13 @@ BOARD_HSV_HI = np.array([88, 255, 170])
 CROWN_HSV_LO = np.array([18, 140, 160])
 CROWN_HSV_HI = np.array([38, 255, 255])
 
-BOARD_AREA_MIN = 15_000   # mas sensible
-BOARD_PCT_MIN  = 0.05     # solo 5% de pantalla verde
-CROWN_PX_MIN   = 40       # menos pixeles requeridos
+BOARD_AREA_MIN = 50_000   # como el original que funcionaba
+BOARD_PCT_MIN  = 0.12     # 12% como el original
+CROWN_PX_MIN   = 30       # como el original
 CONFIRM_FRAMES = 1        # instantaneo (sin esperar)
-CAPTURE_SECS   = 0.15     # captura cada 150 ms
-VERBOSE        = True     # log de % verde cada N segs
+CAPTURE_SECS   = 0.25     # captura cada 250 ms
+VERBOSE        = True     # log de % verde
+SAVE_DEBUG     = True     # guarda screenshots cada N segs
 
 WIN_GOAL = 5
 
@@ -88,11 +89,14 @@ def load_tabla() -> dict:
         return json.load(f)
 
 def get_odds(scores: dict) -> dict:
-    key = ",".join(str(scores[str(p)]["points"]) for p in range(1, 6))
+    # Key dinamica: solo los slots que existen, en orden
+    slots = sorted(scores.keys(), key=int)
+    key = ",".join(str(scores[s]["points"]) for s in slots)
     lst = TABLA.get(key)
     if lst is None:
-        return {str(p): scores[str(p)]["odds"] for p in range(1, 6)}
-    return {str(p): lst[p - 1] for p in range(1, 6)}
+        return {s: scores[s]["odds"] for s in slots}
+    # lst es siempre de 5 slots (slots no activos = 999.99)
+    return {s: lst[int(s) - 1] for s in slots}
 
 TABLA = load_tabla()
 
@@ -170,12 +174,16 @@ def main():
 
     scores = load_scores()
 
+    # Jugadores activos (no incluye los marcados como "no")
+    active_slots = [int(p) for p in scores.keys()]
+
     # Muestra jugadores configurados
     print()
-    for p in range(1, 6):
+    for p in active_slots:
         d = scores[str(p)]
         print(f"  [{p}] {d['name']:<14} color: {d.get('color','?'):<8} "
               f"cuota inicial: {d['odds']}x")
+    print(f"  ({len(active_slots)} jugadores activos)")
     print()
 
     push_firebase(scores)
@@ -186,6 +194,7 @@ def main():
     prev_crowns   = {}
     scored_set    = set()
     last_verbose  = 0
+    last_snapshot = 0
 
     with mss.mss() as sct:
         mon = sct.monitors[1]
@@ -195,15 +204,23 @@ def main():
             info  = {}
             board = detect_board(frame, info)
 
+            now = time.time()
             # Log de % de verde cada 3 segs (para debug)
-            if VERBOSE and time.time() - last_verbose > 3.0:
+            if VERBOSE and now - last_verbose > 3.0:
                 pct  = info.get("pct_verde", 0) * 100
                 area = info.get("area", 0)
                 state = "VISIBLE" if visible else "buscando"
                 print(f"  [{state}] verde={pct:.1f}%  area={int(area):>7}  "
                       f"(min {BOARD_PCT_MIN*100:.0f}% / {BOARD_AREA_MIN})",
                       flush=True)
-                last_verbose = time.time()
+                last_verbose = now
+
+            # Screenshot cada 10 segs para diagnostico
+            if SAVE_DEBUG and now - last_snapshot > 10.0:
+                DEBUG_DIR.mkdir(exist_ok=True)
+                snap_path = str(DEBUG_DIR / f"snap_{datetime.now().strftime('%H%M%S')}.png")
+                cv2.imwrite(snap_path, frame)
+                last_snapshot = now
 
             if board:
                 confirm_count += 1
@@ -216,22 +233,23 @@ def main():
 
                 if visible:
                     crowns = count_crowns(frame, board)
-                    for pnum in range(1, 6):
+                    for pnum in active_slots:
                         nueva = crowns.get(pnum, 0)
                         vieja = prev_crowns.get(pnum, 0)
                         if nueva > vieja and pnum not in scored_set:
                             id_  = str(pnum)
                             name = scores[id_]["name"]
 
-                            old_odds = {i: scores[str(i)]["odds"] for i in range(1, 6)}
+                            old_odds = {i: scores[str(i)]["odds"] for i in active_slots}
                             scores[id_]["points"] = min(
                                 WIN_GOAL, scores[id_]["points"] + 1
                             )
                             scored_set.add(pnum)
 
                             new_odds = get_odds(scores)
-                            for pid, odd in new_odds.items():
-                                scores[pid]["odds"] = odd
+                            for pid in scores.keys():
+                                if pid in new_odds:
+                                    scores[pid]["odds"] = new_odds[pid]
 
                             scores[id_]["history"].append({
                                 "ts":          datetime.now().isoformat(),
@@ -248,7 +266,7 @@ def main():
                             log("  " + " | ".join(
                                 f"{scores[str(p)]['name']}="
                                 f"{scores[str(p)]['odds']}x"
-                                for p in range(1, 6)))
+                                for p in active_slots))
 
                     prev_crowns = crowns
 
@@ -260,11 +278,11 @@ def main():
                     # Sincroniza desde Firebase por si la web reseteo
                     fb = fetch_firebase()
                     if fb:
-                        fb_total    = sum(fb[str(p)]["points"] for p in range(1, 6))
-                        local_total = sum(scores[str(p)]["points"] for p in range(1, 6))
+                        fb_total    = sum(fb[str(p)]["points"] for p in active_slots if str(p) in fb)
+                        local_total = sum(scores[str(p)]["points"] for p in active_slots)
                         if fb_total < local_total:
                             log("Reset detectado desde web -> sincronizando")
-                            scores = fb
+                            scores = {str(p): fb[str(p)] for p in active_slots if str(p) in fb}
                             save_scores(scores)
                 visible       = False
                 confirm_count = 0

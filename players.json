@@ -1,27 +1,27 @@
 {
   "1": {
-    "name": "Gonzalo",
+    "name": "gonzalo",
     "color": "Blanco",
-    "prob": 0.4
-  },
-  "2": {
-    "name": "a",
-    "color": "Negro",
-    "prob": 0.3
-  },
-  "3": {
-    "name": "b",
-    "color": "Rojo",
     "prob": 0.15
   },
+  "2": {
+    "name": "sergio",
+    "color": "Negro",
+    "prob": 0.4
+  },
+  "3": {
+    "name": "joel",
+    "color": "Rojo",
+    "prob": 0.3
+  },
   "4": {
-    "name": "c",
+    "name": "parce",
     "color": "Azul",
-    "prob": 0.1
+    "prob": 0.05
   },
   "5": {
-    "name": "d",
+    "name": "gallo",
     "color": "Verde",
-    "prob": 0.05
+    "prob": 0.1
   }
 }

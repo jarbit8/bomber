@@ -39,11 +39,12 @@ def get_prob(name: str) -> float:
     return SKILLS.get(name.strip().lower(), DEFAULT_PROB)
 
 def calcular_probs(scores, init_probs):
+    n = len(init_probs)
     for i, s in enumerate(scores):
         if s >= WIN_GOAL:
-            return [1.0 if j == i else 0.0 for j in range(5)]
+            return [1.0 if j == i else 0.0 for j in range(n)]
     weights = [init_probs[i] * (1 + (1 - init_probs[i]) * K_BOOST) ** scores[i]
-               for i in range(5)]
+               for i in range(n)]
     total = sum(weights)
     return [w / total for w in weights]
 
@@ -51,15 +52,30 @@ def probs_a_cuotas(probs):
     return [round(max(MIN_CUOTA, 1 / (p * MARGEN)), 2) if p > 0 else 999.99
             for p in probs]
 
-def generar_tabla(init_probs):
+def generar_tabla(init_probs, active_slots):
+    """
+    Genera todas las combinaciones para N jugadores activos.
+    La key es siempre de 5 slots (rellena con 0 los inactivos).
+    """
+    n = len(init_probs)
     tabla = {}
-    for s0 in range(WIN_GOAL):
-        for s1 in range(WIN_GOAL):
-            for s2 in range(WIN_GOAL):
-                for s3 in range(WIN_GOAL):
-                    for s4 in range(WIN_GOAL):
-                        probs = calcular_probs([s0, s1, s2, s3, s4], init_probs)
-                        tabla[f"{s0},{s1},{s2},{s3},{s4}"] = probs_a_cuotas(probs)
+
+    def recurse(scores, depth):
+        if depth == n:
+            probs  = calcular_probs(scores, init_probs)
+            cuotas = probs_a_cuotas(probs)
+            # Mapear a 5 slots: slots activos -> sus cuotas, otros -> 999.99
+            full = [999.99] * 5
+            for idx, slot in enumerate(active_slots):
+                full[int(slot) - 1] = cuotas[idx]
+            # La key incluye solo los slots activos en orden
+            key = ",".join(str(s) for s in scores)
+            tabla[key] = full
+            return
+        for v in range(WIN_GOAL):
+            recurse(scores + [v], depth + 1)
+
+    recurse([], 0)
     return tabla
 
 def push_firebase(scores):
@@ -90,69 +106,76 @@ def main():
         print(f"    {name.capitalize():<10} -> prob {p*100:.0f}%")
     print(f"    (otros nombres -> {DEFAULT_PROB*100:.0f}%)")
     print()
-    print("  Escribe quien juega en cada color del scoreboard:")
+    print("  Escribe quien juega en cada color del scoreboard.")
+    print("  Escribe 'no' si ese color NO esta en uso.")
     print()
 
-    players = {}
-    raw_probs = []
-
+    players_raw = []   # lista de (pos, nombre, prob, color) solo activos
     for i in range(5):
-        while True:
-            nombre = input(f"  [{i+1}] {COLORS[i]:<10}: ").strip()
-            if nombre:
-                break
-            print("     (no puede estar vacio)")
-
+        nombre = input(f"  [{i+1}] {COLORS[i]:<10}: ").strip()
+        if not nombre or nombre.lower() == "no":
+            print(f"      -> SKIP (sin jugador)")
+            continue
         prob = get_prob(nombre)
-        raw_probs.append(prob)
-        players[str(i + 1)] = {
-            "name":  nombre,
-            "color": COLORS[i],
-            "prob":  prob,
-        }
         skill_msg = "conocido" if nombre.lower() in SKILLS else "default"
         print(f"      -> {nombre} ({skill_msg}, prob {prob*100:.0f}%)")
+        players_raw.append((i + 1, nombre, prob, COLORS[i]))
 
-    # Normaliza para que sumen 1.0
-    total = sum(raw_probs)
-    init_probs = [p / total for p in raw_probs]
-    for i in range(5):
-        players[str(i + 1)]["prob"] = init_probs[i]
+    if len(players_raw) < 2:
+        print("\n  Necesitas al menos 2 jugadores.")
+        input("  Enter para salir...")
+        return
 
-    # Cuotas iniciales (estado 0,0,0,0,0)
+    # Normaliza probabilidades a que sumen 1.0
+    total = sum(p[2] for p in players_raw)
+    players = {}
+    for pos, nombre, prob, color in players_raw:
+        players[str(pos)] = {
+            "name":  nombre,
+            "color": color,
+            "prob":  prob / total,
+        }
+
+    # init_probs en el orden de los slots activos (para el modelo)
+    active_slots = sorted(players.keys(), key=int)
+    init_probs   = [players[s]["prob"] for s in active_slots]
+
+    # Cuotas iniciales (todos en 0)
     cuotas_init = probs_a_cuotas(init_probs)
+    cuotas_by_slot = {active_slots[i]: cuotas_init[i] for i in range(len(active_slots))}
 
     cls()
     print("  Configuracion lista:")
     print()
     print(f"  {'POS':<5} {'NOMBRE':<14} {'COLOR':<10} {'PROB%':>7}  {'CUOTA':>8}")
     print("  " + "-" * 50)
-    for i in range(5):
-        p = players[str(i + 1)]
-        print(f"  #{i+1}    {p['name']:<14} {p['color']:<10} "
-              f"{p['prob']*100:>6.1f}%  {cuotas_init[i]:>6.2f}x")
+    for slot in active_slots:
+        p = players[slot]
+        print(f"  #{slot}    {p['name']:<14} {p['color']:<10} "
+              f"{p['prob']*100:>6.1f}%  {cuotas_by_slot[slot]:>6.2f}x")
     print()
 
     # Guarda players.json
     with open(PLAYERS_FILE, "w", encoding="utf-8") as f:
         json.dump(players, f, indent=2, ensure_ascii=False)
 
-    # Genera tabla_odds.json
-    tabla = generar_tabla(init_probs)
+    # Genera tabla_odds.json (solo para slots activos)
+    tabla = generar_tabla(init_probs, active_slots)
     with open(TABLA_FILE, "w") as f:
         json.dump(tabla, f)
-    print(f"  tabla_odds.json generada ({len(tabla)} estados)")
+    print(f"  tabla_odds.json generada ({len(tabla)} estados, "
+          f"{len(active_slots)} jugadores)")
 
-    # Genera scores.json
+    # Genera scores.json (solo con slots activos)
     scores = {
-        str(i + 1): {
-            "name":    players[str(i + 1)]["name"],
-            "color":   COLORS[i],
+        slot: {
+            "name":    players[slot]["name"],
+            "color":   players[slot]["color"],
             "points":  0,
-            "odds":    cuotas_init[i],
+            "odds":    cuotas_by_slot[slot],
             "history": []
         }
-        for i in range(5)
+        for slot in active_slots
     }
     with open(SCORES_FILE, "w", encoding="utf-8") as f:
         json.dump(scores, f, indent=2, ensure_ascii=False)
