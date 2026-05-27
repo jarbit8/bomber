@@ -28,11 +28,12 @@ BOARD_HSV_HI = np.array([88, 255, 170])
 CROWN_HSV_LO = np.array([18, 140, 160])
 CROWN_HSV_HI = np.array([38, 255, 255])
 
-BOARD_AREA_MIN = 60_000
-BOARD_PCT_MIN  = 0.20
-CROWN_PX_MIN   = 60
-CONFIRM_FRAMES = 3
-CAPTURE_SECS   = 0.4
+BOARD_AREA_MIN = 15_000   # mas sensible
+BOARD_PCT_MIN  = 0.05     # solo 5% de pantalla verde
+CROWN_PX_MIN   = 40       # menos pixeles requeridos
+CONFIRM_FRAMES = 1        # instantaneo (sin esperar)
+CAPTURE_SECS   = 0.15     # captura cada 150 ms
+VERBOSE        = True     # log de % verde cada N segs
 
 WIN_GOAL = 5
 
@@ -104,11 +105,14 @@ def log(msg: str):
         f.write(line + "\n")
 
 # ── Deteccion ─────────────────────────────────────────────────────────────────
-def detect_board(frame: np.ndarray):
+def detect_board(frame: np.ndarray, debug_info=None):
     h, w = frame.shape[:2]
     hsv  = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, BOARD_HSV_LO, BOARD_HSV_HI)
-    if mask.sum() / (h * w * 255) < BOARD_PCT_MIN:
+    pct  = mask.sum() / (h * w * 255)
+    if debug_info is not None:
+        debug_info["pct_verde"] = pct
+    if pct < BOARD_PCT_MIN:
         return None
     k    = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 20))
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k)
@@ -116,7 +120,10 @@ def detect_board(frame: np.ndarray):
     if not cnts:
         return None
     biggest = max(cnts, key=cv2.contourArea)
-    if cv2.contourArea(biggest) < BOARD_AREA_MIN:
+    area = cv2.contourArea(biggest)
+    if debug_info is not None:
+        debug_info["area"] = area
+    if area < BOARD_AREA_MIN:
         return None
     return cv2.boundingRect(biggest)
 
@@ -178,13 +185,25 @@ def main():
     visible       = False
     prev_crowns   = {}
     scored_set    = set()
+    last_verbose  = 0
 
     with mss.mss() as sct:
         mon = sct.monitors[1]
         while True:
             raw   = sct.grab(mon)
             frame = cv2.cvtColor(np.array(raw, dtype=np.uint8), cv2.COLOR_BGRA2BGR)
-            board = detect_board(frame)
+            info  = {}
+            board = detect_board(frame, info)
+
+            # Log de % de verde cada 3 segs (para debug)
+            if VERBOSE and time.time() - last_verbose > 3.0:
+                pct  = info.get("pct_verde", 0) * 100
+                area = info.get("area", 0)
+                state = "VISIBLE" if visible else "buscando"
+                print(f"  [{state}] verde={pct:.1f}%  area={int(area):>7}  "
+                      f"(min {BOARD_PCT_MIN*100:.0f}% / {BOARD_AREA_MIN})",
+                      flush=True)
+                last_verbose = time.time()
 
             if board:
                 confirm_count += 1
