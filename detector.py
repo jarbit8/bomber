@@ -1,6 +1,7 @@
 """
 Detector de puntos - Super Bomberman 4
-Captura pantalla, detecta coronas y actualiza puntajes + cuotas.
+Lee players.json para nombres, usa tabla_odds.json para cuotas.
+Pushea a Firebase en tiempo real.
 """
 import cv2
 import numpy as np
@@ -13,27 +14,27 @@ from datetime import datetime
 from pathlib import Path
 
 # ── Config ────────────────────────────────────────────────────────────────────
-FIREBASE_URL   = "https://bomber-3a196-default-rtdb.firebaseio.com/scores.json"
-SCORES_FILE    = Path(__file__).parent / "scores.json"
-TABLA_FILE     = Path(__file__).parent / "tabla_odds.json"
-LOG_FILE       = Path(__file__).parent / "log.txt"
-DEBUG_DIR      = Path(__file__).parent / "debug"
+BASE_DIR     = Path(__file__).parent
+FIREBASE_URL = "https://bomber-3a196-default-rtdb.firebaseio.com/scores.json"
+SCORES_FILE  = BASE_DIR / "scores.json"
+TABLA_FILE   = BASE_DIR / "tabla_odds.json"
+PLAYERS_FILE = BASE_DIR / "players.json"
+LOG_FILE     = BASE_DIR / "log.txt"
+DEBUG_DIR    = BASE_DIR / "debug"
 
-PLAYERS = {1:"Sergio", 2:"Joel", 3:"Gonzalo", 4:"Gallo", 5:"Parce"}
-
-# HSV del tablero verde del scoreboard
+# Colores HSV del scoreboard verde y coronas doradas
 BOARD_HSV_LO = np.array([48,  80,  60])
 BOARD_HSV_HI = np.array([88, 255, 170])
-
-# HSV de las coronas doradas
 CROWN_HSV_LO = np.array([18, 140, 160])
 CROWN_HSV_HI = np.array([38, 255, 255])
 
-BOARD_AREA_MIN  = 60_000   # area minima del tablero en pixeles
-BOARD_PCT_MIN   = 0.20     # el tablero debe cubrir >20% de la pantalla
-CROWN_PX_MIN    = 60       # pixeles minimos para contar una corona
-CONFIRM_FRAMES  = 3        # frames consecutivos para confirmar scoreboard
-CAPTURE_SECS    = 0.4
+BOARD_AREA_MIN = 60_000
+BOARD_PCT_MIN  = 0.20
+CROWN_PX_MIN   = 60
+CONFIRM_FRAMES = 3
+CAPTURE_SECS   = 0.4
+
+WIN_GOAL = 5
 
 # SSL sin verificacion (fix Python 3.14)
 _CTX = ssl.create_default_context()
@@ -52,13 +53,14 @@ def push_firebase(scores: dict):
     except Exception as e:
         print(f"  [Firebase ERROR] {e}", flush=True)
 
-# ── Scores ────────────────────────────────────────────────────────────────────
+# ── Scores / Players ──────────────────────────────────────────────────────────
 def load_scores() -> dict:
     if SCORES_FILE.exists():
         with open(SCORES_FILE, encoding="utf-8") as f:
             return json.load(f)
-    return {str(p): {"name": PLAYERS[p], "points": 0, "odds": 1.5, "history": []}
-            for p in PLAYERS}
+    # Fallback si no existe scores.json
+    return {str(p): {"name": f"Jugador{p}", "color": "?", "points": 0,
+                     "odds": 5.0, "history": []} for p in range(1, 6)}
 
 def save_scores(scores: dict):
     with open(SCORES_FILE, "w", encoding="utf-8") as f:
@@ -67,7 +69,10 @@ def save_scores(scores: dict):
 # ── Tabla de odds ─────────────────────────────────────────────────────────────
 def load_tabla() -> dict:
     if not TABLA_FILE.exists():
-        raise FileNotFoundError("tabla_odds.json no encontrado. Corre: python simulacion.py")
+        raise FileNotFoundError(
+            "tabla_odds.json no encontrado.\n"
+            "Corre primero: python simulacion.py"
+        )
     with open(TABLA_FILE) as f:
         return json.load(f)
 
@@ -90,20 +95,11 @@ def log(msg: str):
 
 # ── Deteccion ─────────────────────────────────────────────────────────────────
 def detect_board(frame: np.ndarray):
-    """
-    Retorna el boundingRect del tablero verde si es visible, o None.
-    Requiere que cubra al menos BOARD_PCT_MIN de la pantalla.
-    """
     h, w = frame.shape[:2]
     hsv  = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, BOARD_HSV_LO, BOARD_HSV_HI)
-
-    # % de pantalla que es verde
-    pct = mask.sum() / (h * w * 255)
-    if pct < BOARD_PCT_MIN:
+    if mask.sum() / (h * w * 255) < BOARD_PCT_MIN:
         return None
-
-    # Encuentra el contorno mas grande
     k    = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 20))
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k)
     cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -115,17 +111,13 @@ def detect_board(frame: np.ndarray):
     return cv2.boundingRect(biggest)
 
 def count_crowns(frame: np.ndarray, board) -> dict:
-    """
-    Cuenta coronas por jugador (1-5) dentro del tablero.
-    Retorna {1: n, 2: n, 3: n, 4: n, 5: n}
-    """
     bx, by, bw, bh = board
     hsv   = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     cmask = cv2.inRange(hsv, CROWN_HSV_LO, CROWN_HSV_HI)
 
-    header_f = 0.18   # fraccion del alto reservada para cabecera
-    label_f  = 0.30   # fraccion del ancho reservada para etiquetas
-    n_cells  = 6      # columnas de coronas posibles
+    header_f = 0.18
+    label_f  = 0.30
+    n_cells  = 6
 
     cy0  = int(by + bh * header_f)
     cx0  = int(bx + bw * label_f)
@@ -134,8 +126,8 @@ def count_crowns(frame: np.ndarray, board) -> dict:
 
     result = {}
     for p in range(5):
-        y0  = cy0 + p * rowh
-        y1  = y0 + rowh
+        y0 = cy0 + p * rowh
+        y1 = y0 + rowh
         cnt = 0
         for c in range(n_cells):
             x0 = cx0 + c * celw
@@ -146,61 +138,66 @@ def count_crowns(frame: np.ndarray, board) -> dict:
     return result
 
 def save_debug(frame: np.ndarray, tag: str):
-    """Guarda screenshot de debug."""
     DEBUG_DIR.mkdir(exist_ok=True)
     ts   = datetime.now().strftime("%H%M%S")
     path = str(DEBUG_DIR / f"{tag}_{ts}.png")
     cv2.imwrite(path, frame)
-    log(f"  [DEBUG] screenshot -> {path}")
+    log(f"  [DEBUG] -> debug/{tag}_{ts}.png")
 
 # ── Loop principal ─────────────────────────────────────────────────────────────
 def main():
     print("=" * 55)
     print("  Detector Bomberman 4  |  Ctrl+C para salir")
-    print(f"  Tabla: {len(TABLA)} estados cargados")
+    print(f"  Tabla cargada: {len(TABLA)} estados")
     print("=" * 55)
 
     scores = load_scores()
+
+    # Muestra jugadores configurados
+    print()
+    for p in range(1, 6):
+        d = scores[str(p)]
+        print(f"  [{p}] {d['name']:<14} color: {d.get('color','?'):<8} "
+              f"cuota inicial: {d['odds']}x")
+    print()
+
     push_firebase(scores)
     log("Scores iniciales enviados a Firebase")
 
-    confirm_count  = 0          # frames consecutivos con scoreboard
-    visible        = False      # scoreboard confirmado
-    prev_crowns    = {}         # coronas del frame anterior
-    scored_set     = set()      # jugadores que ya sumaron en este scoreboard
+    confirm_count = 0
+    visible       = False
+    prev_crowns   = {}
+    scored_set    = set()
 
     with mss.mss() as sct:
         mon = sct.monitors[1]
         while True:
             raw   = sct.grab(mon)
             frame = cv2.cvtColor(np.array(raw, dtype=np.uint8), cv2.COLOR_BGRA2BGR)
-
             board = detect_board(frame)
 
             if board:
                 confirm_count += 1
-
-                # Confirmar scoreboard tras N frames consecutivos
                 if not visible and confirm_count >= CONFIRM_FRAMES:
                     visible     = True
                     prev_crowns = count_crowns(frame, board)
                     scored_set  = set()
-                    log(f"SCOREBOARD confirmado (baseline: {prev_crowns})")
+                    log(f"SCOREBOARD confirmado  baseline={prev_crowns}")
                     save_debug(frame, "scoreboard")
 
                 if visible:
                     crowns = count_crowns(frame, board)
-
                     for pnum in range(1, 6):
                         nueva = crowns.get(pnum, 0)
                         vieja = prev_crowns.get(pnum, 0)
-
                         if nueva > vieja and pnum not in scored_set:
                             id_  = str(pnum)
                             name = scores[id_]["name"]
 
                             old_odds = {i: scores[str(i)]["odds"] for i in range(1, 6)}
-                            scores[id_]["points"] += 1
+                            scores[id_]["points"] = min(
+                                WIN_GOAL, scores[id_]["points"] + 1
+                            )
                             scored_set.add(pnum)
 
                             new_odds = get_odds(scores)
@@ -216,10 +213,12 @@ def main():
                             save_scores(scores)
                             push_firebase(scores)
 
-                            log(f"PUNTO -> {name}  pts={scores[id_]['points']}  "
+                            log(f"PUNTO -> {name}  "
+                                f"pts={scores[id_]['points']}  "
                                 f"{old_odds[pnum]}x -> {scores[id_]['odds']}x")
                             log("  " + " | ".join(
-                                f"{scores[str(p)]['name']}={scores[str(p)]['odds']}x"
+                                f"{scores[str(p)]['name']}="
+                                f"{scores[str(p)]['odds']}x"
                                 for p in range(1, 6)))
 
                     prev_crowns = crowns
