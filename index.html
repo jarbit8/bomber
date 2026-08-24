@@ -22,6 +22,7 @@
   --c-joel:#4d9bff;
   --c-gonzalo:#4dd97a;
   --c-parce:#ffd23f;
+  --c-gallo:#b84dff;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -156,9 +157,14 @@ input[type=date]{
   font-family:var(--pix);font-size:10px;width:100%;padding:12px;
   background:#1c1c2e;color:var(--text);border:3px solid var(--line);margin-bottom:18px;
 }
-.chk{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:20px}
+.chk{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px}
 .chk label{display:flex;align-items:center;gap:8px;font-size:9px;background:#1c1c2e;border:3px solid var(--line);padding:10px;cursor:pointer}
 .chk input{width:15px;height:15px;accent-color:#ff8a1f}
+.addp{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.addp input[type=text]{
+  flex:1;min-width:150px;font-family:var(--pix);font-size:9px;padding:11px;
+  background:#1c1c2e;color:var(--text);border:3px solid var(--line);
+}
 .modal-acts{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 .err{font-size:8px;color:#ff6b6b;margin-bottom:14px;line-height:1.8}
 
@@ -335,7 +341,7 @@ body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:
   <footer>
     <span class="live" id="live"><i></i>CONECTANDO...</span>
     <button class="mini" id="authBtn" hidden>ENTRAR PARA EDITAR</button><br>
-    SERGIO &middot; JOEL &middot; GONZALO &middot; PARCE<br>
+    SERGIO &middot; JOEL &middot; GONZALO &middot; PARCE &middot; GALLO<br>
     <button class="mini" id="exportBtn">EXPORTAR</button>
     <button class="mini" id="importBtn">IMPORTAR</button>
     <input type="file" id="importFile" accept="application/json" hidden>
@@ -349,6 +355,11 @@ body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:
     <input type="date" id="fDate">
     <label class="f">QUIENES JUGARON</label>
     <div class="chk" id="fPlayers"></div>
+    <label class="f">SE UNIO ALGUIEN MAS?</label>
+    <div class="addp">
+      <input type="text" id="fOtroName" placeholder="NOMBRE DEL INVITADO" maxlength="20">
+      <button class="mini" type="button" id="fOtroAdd">+ AGREGAR</button>
+    </div>
     <p class="err" id="fErr" hidden></p>
     <div class="modal-acts">
       <button class="btn ghost" type="submit" value="cancel">CANCELAR</button>
@@ -364,9 +375,14 @@ const PLAYERS = [
   { id:'sergio',  name:'SERGIO',  color:'var(--c-sergio)'  },
   { id:'joel',    name:'JOEL',    color:'var(--c-joel)'    },
   { id:'gonzalo', name:'GONZALO', color:'var(--c-gonzalo)' },
-  { id:'parce',   name:'PARCE',   color:'var(--c-parce)'   }
+  { id:'parce',   name:'PARCE',   color:'var(--c-parce)'   },
+  { id:'gallo',   name:'GALLO',   color:'var(--c-gallo)'   }
 ];
-const pById = id => PLAYERS.find(p => p.id === id);
+/* colores para invitados que se agreguen sobre la marcha, sin pisar los fijos */
+const GUEST_COLORS = ['#ff8a5c','#5cd6ff','#c48cff','#8cff9e','#ff6ec7','#ffe45c','#7dd3d8'];
+/* busca en los fijos y tambien en los invitados que se hayan agregado */
+const pById = id => PLAYERS.find(p => p.id === id) || (state.customPlayers || []).find(p => p.id === id);
+const allPlayers = () => PLAYERS.concat(state.customPlayers || []);
 
 /* cada jornada guarda "order": el orden real en que se gano cada partida.
    de ahi se calculan solos los puntos y la racha mas larga. */
@@ -376,7 +392,8 @@ const SEED = {
       players:['sergio','joel','gonzalo','parce'],
       order:['sergio','joel','gonzalo','sergio','gonzalo'],
       closed:false }
-  ]
+  ],
+  customPlayers: [] // invitados que se van agregando desde "NUEVA JORNADA"
 };
 
 let state = load();
@@ -399,7 +416,9 @@ function normalizeDay(d){
   return d;
 }
 function normalizeState(s){
-  if(s && Array.isArray(s.days)) s.days = s.days.map(normalizeDay);
+  if(!s) return s;
+  if(Array.isArray(s.days)) s.days = s.days.map(normalizeDay);
+  if(!Array.isArray(s.customPlayers)) s.customPlayers = [];
   return s;
 }
 
@@ -496,7 +515,7 @@ function globalBestStreak(){
 }
 function totals(){
   const t = {};
-  PLAYERS.forEach(p => t[p.id] = { pts:0, jugadas:0, jornadas:0, ganadas:0 });
+  allPlayers().forEach(p => t[p.id] = { pts:0, jugadas:0, jornadas:0, ganadas:0 });
   state.days.forEach(d => {
     const w = orderToWins(d.order);
     const tot = dayTotal(d);
@@ -510,7 +529,9 @@ function totals(){
       if(max > 0 && (w[p] || 0) === max) t[p].ganadas += 1;
     });
   });
-  return PLAYERS.map(p => Object.assign({}, p, t[p.id]))
+  const fixedIds = PLAYERS.map(p => p.id);
+  return allPlayers().map(p => Object.assign({}, p, t[p.id]))
+    .filter(r => fixedIds.indexOf(r.id) > -1 || r.jornadas > 0) // a los invitados solo se les muestra si ya jugaron
     .sort((a,b) => b.pts - a.pts || b.ganadas - a.ganadas || a.name.localeCompare(b.name));
 }
 
@@ -659,7 +680,7 @@ function renderMonths(){
   box.innerHTML = keys.map(k => {
     const dds = byMonth[k];
     const t = {};
-    PLAYERS.forEach(p => t[p.id] = { pts:0, jugadas:0 });
+    allPlayers().forEach(p => t[p.id] = { pts:0, jugadas:0 });
     let partidas = 0, bestLen = 0, bestHolders = [];
     dds.forEach(d => {
       const w = orderToWins(d.order);
@@ -669,7 +690,7 @@ function renderMonths(){
       const r = longestStreak(d.order);
       if(r.len > bestLen){ bestLen = r.len; bestHolders = r.holders; }
     });
-    const rows = PLAYERS.map(p => Object.assign({}, p, t[p.id]))
+    const rows = allPlayers().map(p => Object.assign({}, p, t[p.id]))
       .filter(r => r.jugadas > 0)
       .sort((a,b) => b.pts - a.pts || a.name.localeCompare(b.name));
     const maxPts = Math.max(1, rows[0] ? rows[0].pts : 1);
@@ -759,18 +780,44 @@ document.getElementById('days').addEventListener('click', e => {
 });
 
 const dlg = document.getElementById('dlg');
+let pendingGuests = []; // invitados nuevos creados en este dialogo, todavia sin guardar
+
+function playerCheckboxHTML(p, checked){
+  return '<label style="color:' + p.color + '"><input type="checkbox" value="' + p.id + '"' +
+    (checked ? ' checked' : '') + '>' + p.name + '</label>';
+}
 function openDialog(day){
   editing = day || null;
+  pendingGuests = [];
   document.getElementById('dlgTitle').textContent = day ? 'EDITAR JORNADA' : 'NUEVA JORNADA';
   document.getElementById('fDate').value = day ? day.date : new Date().toISOString().slice(0,10);
   document.getElementById('fErr').hidden = true;
-  document.getElementById('fPlayers').innerHTML = PLAYERS.map(p =>
-    '<label style="color:' + p.color + '"><input type="checkbox" value="' + p.id + '"' +
-    ((!day || day.players.indexOf(p.id) > -1) ? ' checked' : '') + '>' + p.name + '</label>'
+  document.getElementById('fOtroName').value = '';
+  document.getElementById('fPlayers').innerHTML = allPlayers().map(p =>
+    playerCheckboxHTML(p, !day || day.players.indexOf(p.id) > -1)
   ).join('');
   dlg.showModal();
 }
 document.getElementById('newDay').addEventListener('click', () => { if(canEdit) openDialog(null); });
+
+document.getElementById('fOtroAdd').addEventListener('click', () => {
+  const inp = document.getElementById('fOtroName');
+  const name = inp.value.trim();
+  if(!name) return;
+  const known = PLAYERS.concat(state.customPlayers || [], pendingGuests);
+  const dup = known.find(p => p.name === name.toUpperCase());
+  if(dup){
+    const cb = document.querySelector('#fPlayers input[value="' + dup.id + '"]');
+    if(cb) cb.checked = true;
+    inp.value = '';
+    return;
+  }
+  const color = GUEST_COLORS[(state.customPlayers.length + pendingGuests.length) % GUEST_COLORS.length];
+  const guest = { id: 'g' + Date.now().toString(36), name: name.toUpperCase(), color };
+  pendingGuests.push(guest);
+  document.getElementById('fPlayers').insertAdjacentHTML('beforeend', playerCheckboxHTML(guest, true));
+  inp.value = '';
+});
 
 document.getElementById('fSave').addEventListener('click', () => {
   if(editing && editing.closed) return; // no se toca una jornada cerrada
@@ -781,6 +828,14 @@ document.getElementById('fSave').addEventListener('click', () => {
   if(!sel.length){ err.textContent = 'ELIGE AL MENOS UN JUGADOR'; err.hidden = false; return; }
   const choque = state.days.filter(d => d.date === date && (!editing || d.id !== editing.id))[0];
   if(choque){ err.textContent = 'YA EXISTE UNA JORNADA ESE DIA'; err.hidden = false; return; }
+
+  // recien ahora quedan confirmados los invitados nuevos que se marcaron
+  pendingGuests.forEach(g => {
+    if(sel.indexOf(g.id) > -1 && !state.customPlayers.find(p => p.id === g.id)){
+      state.customPlayers.push(g);
+    }
+  });
+  pendingGuests = [];
 
   if(editing){
     editing.date = date;
@@ -794,7 +849,7 @@ document.getElementById('fSave').addEventListener('click', () => {
   dlg.close();
   save();
 });
-dlg.addEventListener('close', () => { editing = null; });
+dlg.addEventListener('close', () => { editing = null; pendingGuests = []; });
 
 document.getElementById('exportBtn').addEventListener('click', () => {
   const a = document.createElement('a');
