@@ -118,14 +118,33 @@ h1 .era{display:block;font-size:.52em;color:#fff;text-shadow:3px 3px 0 #2a53a8,5
 .mini{font-family:var(--pix);font-size:8px;cursor:pointer;padding:9px 10px;color:var(--dim);background:var(--panel2);border:3px solid var(--line)}
 .mini:active{transform:translate(2px,2px)}
 .plist{display:flex;flex-direction:column;gap:10px}
-.pl{display:grid;grid-template-columns:26px 1fr auto auto;gap:10px;align-items:center;background:#1c1c2e;border:3px solid var(--line);padding:10px}
-.pl .pn{font-size:10px}
-.pl .pv{font-size:15px;color:var(--fire2);min-width:26px;text-align:center}
-.pmb{display:flex;gap:6px}
-.step{font-family:var(--pix);font-size:11px;width:32px;height:32px;cursor:pointer;color:#1a1000;background:var(--fire);border:3px solid var(--line);line-height:1}
-.step.minus{background:var(--panel2);color:var(--dim)}
-.step:active{transform:translate(2px,2px)}
-.crown{font-size:12px;margin-left:6px}
+.pl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#1c1c2e;border:3px solid var(--line);padding:10px}
+.pl .pn{font-size:10px;flex:1;min-width:70px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pl .pv{font-size:15px;color:var(--fire2);min-width:24px;text-align:center}
+.crown{font-size:12px}
+.winbtn{font-family:var(--pix);font-size:8px;cursor:pointer;padding:10px 12px;color:#1a1000;background:var(--fire);border:3px solid var(--line)}
+.winbtn:active{transform:translate(2px,2px)}
+.winbtn:disabled{opacity:.3;cursor:not-allowed}
+.streak{font-size:7px;background:#3a1f00;color:#ffb347;border:2px solid #5a3000;padding:3px 6px;display:inline-flex;align-items:center;gap:3px;animation:streakPulse .5s steps(2,end) infinite}
+@keyframes streakPulse{50%{opacity:.6}}
+.closed-badge{display:inline-block;font-size:7px;color:#ffb347;background:#3a1f00;border:2px solid #5a3000;padding:3px 7px;margin-left:8px;vertical-align:middle}
+.tl{display:flex;flex-wrap:wrap;gap:5px;margin-top:14px}
+.tchip{width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#0a0a12;border:2px solid var(--line);font-family:var(--pix)}
+.racha-line{font-size:7px;color:var(--fire2);margin-top:14px;padding-top:14px;border-top:3px solid var(--line);line-height:1.9}
+.mini.close{color:#ffb347}
+.mini.del{color:#ff6b6b}
+.mini:disabled{opacity:.3;cursor:not-allowed}
+
+/* mes */
+.mlist{display:flex;flex-direction:column;gap:8px}
+.mrow{background:#1c1c2e;border:3px solid var(--line);padding:9px 10px}
+.mrow .top{display:flex;align-items:center;gap:8px}
+.mrow .mpos{font-size:9px;color:var(--dim);width:14px;text-align:center}
+.mrow .av{width:18px;height:18px;flex:none;border:2px solid var(--line)}
+.mrow .mn{font-size:9px;flex:1}
+.mrow .mpts{font-size:12px;color:var(--fire2)}
+.mbar{height:7px;background:#14141f;border:2px solid var(--line);margin-top:8px;overflow:hidden}
+.mbar i{display:block;height:100%}
 
 /* dialogo */
 dialog{border:none;background:transparent;padding:0;color:var(--text)}
@@ -247,7 +266,7 @@ footer{text-align:center;margin-top:34px;font-size:7px;color:#55556e;line-height
 .live.off i{background:#ffa04d}
 @keyframes pulseDot{50%{opacity:.25}}
 /* modo solo lectura: nadie mas toca el marcador */
-body.readonly .step,
+body.readonly .winbtn,
 body.readonly #newDay,
 body.readonly .day-acts,
 body.readonly #importBtn{display:none}
@@ -256,8 +275,7 @@ body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:
 @media(max-width:560px){
   .podium{grid-template-columns:1fr;align-items:stretch}
   .row{grid-template-columns:30px 1fr auto;gap:8px}
-  .pl{grid-template-columns:22px 1fr auto;grid-template-areas:"a b c" ". d d"}
-  .pl .av{grid-area:a}.pl .pn{grid-area:b}.pl .pv{grid-area:c}.pl .pmb{grid-area:d;justify-content:flex-end;margin-top:8px}
+  .pl{justify-content:space-between}
 }
 </style>
 </head>
@@ -292,6 +310,7 @@ body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:
 
   <nav class="tabs">
     <button class="tab on" data-tab="global">&#127942; GLOBAL</button>
+    <button class="tab" data-tab="mes">&#128198; POR MES</button>
     <button class="tab" data-tab="dias">&#128197; POR DIAS</button>
   </nav>
 
@@ -301,10 +320,14 @@ body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:
     <div class="gstats" id="gstats"></div>
   </section>
 
+  <section id="tab-mes" hidden>
+    <div id="months"></div>
+  </section>
+
   <section id="tab-dias" hidden>
     <div class="bar-top">
       <button class="btn" id="newDay">+ NUEVA JORNADA</button>
-      <p class="hint">CADA + SUMA UNA PARTIDA GANADA<br>SE GUARDA SOLO Y ACTUALIZA EL GLOBAL</p>
+      <p class="hint">TOCA "GANO" DEBAJO DE QUIEN GANE CADA PARTIDA<br>LA RACHA SE ARMA SOLA &middot; CIERRA LA JORNADA CUANDO TERMINEN</p>
     </div>
     <div id="days"></div>
   </section>
@@ -335,7 +358,7 @@ body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:
 </dialog>
 
 <script>
-const KEY = 'bomber-nueva-era-v1';
+const KEY = 'bomber-nueva-era-v2';
 
 const PLAYERS = [
   { id:'sergio',  name:'SERGIO',  color:'var(--c-sergio)'  },
@@ -345,25 +368,49 @@ const PLAYERS = [
 ];
 const pById = id => PLAYERS.find(p => p.id === id);
 
+/* cada jornada guarda "order": el orden real en que se gano cada partida.
+   de ahi se calculan solos los puntos y la racha mas larga. */
 const SEED = {
   days: [
     { id:'d1', date:'2026-08-18',
-      players:['sergio','joel','gonzalo'],
-      wins:{ sergio:2, joel:1, gonzalo:2 } }
+      players:['sergio','joel','gonzalo','parce'],
+      order:['sergio','joel','gonzalo','sergio','gonzalo'],
+      closed:false }
   ]
 };
 
 let state = load();
 let editing = null;
 
+/* compatibilidad: si llega una jornada vieja con "wins" en vez de "order",
+   o sin "closed", la arregla para que no truene nada */
+function normalizeDay(d){
+  if(!Array.isArray(d.order)){
+    const arr = [];
+    if(d.wins){
+      Object.keys(d.wins).forEach(p => {
+        for(let i=0;i<(d.wins[p]||0);i++) arr.push(p);
+      });
+    }
+    d.order = arr;
+  }
+  if(typeof d.closed !== 'boolean') d.closed = false;
+  delete d.wins;
+  return d;
+}
+function normalizeState(s){
+  if(s && Array.isArray(s.days)) s.days = s.days.map(normalizeDay);
+  return s;
+}
+
 function load(){
   try{
     const raw = localStorage.getItem(KEY);
-    if(!raw) return JSON.parse(JSON.stringify(SEED));
+    if(!raw) return normalizeState(JSON.parse(JSON.stringify(SEED)));
     const d = JSON.parse(raw);
-    return (d && Array.isArray(d.days)) ? d : JSON.parse(JSON.stringify(SEED));
+    return (d && Array.isArray(d.days)) ? normalizeState(d) : normalizeState(JSON.parse(JSON.stringify(SEED)));
   }catch(e){
-    return JSON.parse(JSON.stringify(SEED));
+    return normalizeState(JSON.parse(JSON.stringify(SEED)));
   }
 }
 function save(){
@@ -384,9 +431,11 @@ function cloudPush(){
   try{ cloudSet(state); }catch(e){}
 }
 let canEdit = true;
+let rendered = false;
 function setEdit(v){
   canEdit = v;
   document.body.classList.toggle('readonly', !v);
+  if(rendered) render(); // refresca botones de edicion al instante segun quien esta logueado
 }
 function setLive(ok, txt){
   const el = document.getElementById('live');
@@ -398,22 +447,67 @@ function setLive(ok, txt){
 function sortedDays(){
   return state.days.slice().sort((a,b) => b.date.localeCompare(a.date));
 }
+function orderToWins(order){
+  const w = {};
+  (order || []).forEach(pid => { w[pid] = (w[pid] || 0) + 1; });
+  return w;
+}
 function dayTotal(d){
-  return d.players.reduce((s,p) => s + (d.wins[p] || 0), 0);
+  return (d.order || []).length;
+}
+/* racha mas larga dentro de una secuencia de ganadores: cuantas seguidas
+   gano el mismo jugador, y quien(es) llegaron a ese maximo */
+function longestStreak(order){
+  let bestLen = 0, bestHolders = [];
+  let curLen = 0, curPid = null;
+  (order || []).forEach(pid => {
+    if(pid === curPid) curLen++;
+    else { curPid = pid; curLen = 1; }
+    if(curLen > bestLen){ bestLen = curLen; bestHolders = [curPid]; }
+    else if(curLen === bestLen && !bestHolders.includes(curPid)) bestHolders.push(curPid);
+  });
+  return { len:bestLen, holders:bestHolders };
+}
+/* racha que esta corriendo ahora mismo (las ultimas partidas seguidas del
+   mismo jugador), para el badge en vivo mientras se edita una jornada */
+function currentStreak(order){
+  const o = order || [];
+  if(!o.length) return { len:0, pid:null };
+  const pid = o[o.length - 1];
+  let len = 0;
+  for(let i = o.length - 1; i >= 0; i--){
+    if(o[i] === pid) len++; else break;
+  }
+  return { len, pid };
+}
+function streakLabel(r){
+  if(r.len <= 1) return 'RACHA MAS LARGA: 1 (nadie repitio consecutiva)';
+  return 'RACHA MAS LARGA: ' + r.len + 'x &mdash; ' + r.holders.map(h => {
+    const p = pById(h); return p ? p.name : h;
+  }).join(', ');
+}
+function globalBestStreak(){
+  let bestLen = 0, bestHolders = [], bestDate = null;
+  state.days.forEach(d => {
+    const r = longestStreak(d.order);
+    if(r.len > bestLen){ bestLen = r.len; bestHolders = r.holders; bestDate = d.date; }
+  });
+  return { len:bestLen, holders:bestHolders, date:bestDate };
 }
 function totals(){
   const t = {};
   PLAYERS.forEach(p => t[p.id] = { pts:0, jugadas:0, jornadas:0, ganadas:0 });
   state.days.forEach(d => {
+    const w = orderToWins(d.order);
     const tot = dayTotal(d);
     let max = 0;
-    d.players.forEach(p => { max = Math.max(max, d.wins[p] || 0); });
+    d.players.forEach(p => { max = Math.max(max, w[p] || 0); });
     d.players.forEach(p => {
       if(!t[p]) return;
-      t[p].pts      += d.wins[p] || 0;
+      t[p].pts      += w[p] || 0;
       t[p].jugadas  += tot;
       t[p].jornadas += 1;
-      if(max > 0 && (d.wins[p] || 0) === max) t[p].ganadas += 1;
+      if(max > 0 && (w[p] || 0) === max) t[p].ganadas += 1;
     });
   });
   return PLAYERS.map(p => Object.assign({}, p, t[p.id]))
@@ -463,11 +557,16 @@ function renderGlobal(){
   const top = rows[0] ? rows[0].pts : 0;
   const empatados = rows.filter(r => r.pts === top && top > 0);
   const lider = top === 0 ? '-' : (empatados.length > 1 ? 'EMPATE' : empatados[0].name);
+  const bs = globalBestStreak();
+  const rachaTxt = bs.len >= 2
+    ? (bs.len + 'x &middot; ' + bs.holders.map(h => { const p = pById(h); return p ? p.name : h; }).join(', '))
+    : '-';
   document.getElementById('gstats').innerHTML =
     stat(partidas, 'PARTIDAS JUGADAS') +
     stat(state.days.length, 'JORNADAS') +
     stat(lider, 'AL MANDO') +
-    stat(top + ' PTS', 'PUNTAJE MAS ALTO');
+    stat(top + ' PTS', 'PUNTAJE MAS ALTO') +
+    stat(rachaTxt, 'RACHA MAS LARGA');
 }
 function stat(v, l){
   return '<div class="gs pix"><b>' + v + '</b><span>' + l + '</span></div>';
@@ -480,48 +579,135 @@ function renderDays(){
     box.innerHTML = '<div class="empty pix">TODAVIA NO HAY JORNADAS<br>DALE A "NUEVA JORNADA"</div>';
     return;
   }
-  box.innerHTML = days.map(d => {
-    const tot = dayTotal(d);
-    let max = 0;
-    d.players.forEach(p => { max = Math.max(max, d.wins[p] || 0); });
-    const lista = d.players.slice().sort((a,b) => (d.wins[b]||0) - (d.wins[a]||0));
-    const filas = lista.map(pid => {
-      const p = pById(pid);
-      if(!p) return '';
-      const w = d.wins[pid] || 0;
-      const rey = (max > 0 && w === max) ? '<span class="crown">&#128081;</span>' : '';
-      return '<div class="pl">' +
-        '<span class="av" style="background:' + p.color + '"></span>' +
-        '<span class="pn" style="color:' + p.color + '">' + p.name + rey + '</span>' +
-        '<span class="pv">' + w + '</span>' +
-        '<span class="pmb">' +
-          '<button class="step minus" data-act="dec" data-day="' + d.id + '" data-p="' + pid + '">-</button>' +
-          '<button class="step" data-act="inc" data-day="' + d.id + '" data-p="' + pid + '">+</button>' +
-        '</span>' +
-      '</div>';
+  box.innerHTML = days.map(dayCardHTML).join('');
+}
+
+function dayCardHTML(d){
+  const order = d.order || [];
+  const w = orderToWins(order);
+  const tot = order.length;
+  let max = 0;
+  d.players.forEach(p => { max = Math.max(max, w[p] || 0); });
+  const editable = canEdit && !d.closed;
+  const cur = editable ? currentStreak(order) : { len:0, pid:null };
+  const lista = d.players.slice().sort((a,b) => (w[b]||0) - (w[a]||0));
+
+  const filas = lista.map(pid => {
+    const p = pById(pid);
+    if(!p) return '';
+    const pv = w[pid] || 0;
+    const rey = (max > 0 && pv === max) ? '<span class="crown">&#128081;</span>' : '';
+    const racha = (cur.len >= 2 && cur.pid === pid) ? '<span class="streak">&#128293; x' + cur.len + '</span>' : '';
+    const winBtn = editable ? '<button class="winbtn" data-act="win" data-day="' + d.id + '" data-p="' + pid + '">GANO</button>' : '';
+    return '<div class="pl">' +
+      '<span class="av" style="background:' + p.color + '"></span>' +
+      '<span class="pn" style="color:' + p.color + '">' + p.name + rey + racha + '</span>' +
+      '<span class="pv">' + pv + '</span>' +
+      winBtn +
+    '</div>';
+  }).join('');
+
+  const timeline = tot ? '<div class="tl">' + order.map(pid => {
+    const p = pById(pid);
+    return '<span class="tchip" style="background:' + (p ? p.color : '#555') + '" title="' + (p ? p.name : pid) + '">' + (p ? p.name[0] : '?') + '</span>';
+  }).join('') + '</div>' : '';
+
+  const rachaLine = tot ? '<div class="racha-line">&#128293; ' + streakLabel(longestStreak(order)) + '</div>' : '';
+
+  const acts = [];
+  if(editable){
+    acts.push('<button class="mini" data-act="undo" data-day="' + d.id + '"' + (tot ? '' : ' disabled') + '>&#8617; DESHACER</button>');
+    acts.push('<button class="mini" data-act="edit" data-day="' + d.id + '">EDITAR</button>');
+    acts.push('<button class="mini close" data-act="close" data-day="' + d.id + '">CERRAR JORNADA</button>');
+  }
+  if(canEdit){
+    acts.push('<button class="mini del" data-act="del" data-day="' + d.id + '">BORRAR</button>');
+  }
+
+  const badge = d.closed ? '<span class="closed-badge">&#128274; CERRADA</span>' : '';
+
+  return '<div class="day pix">' +
+    '<div class="day-h"><div>' +
+      '<div class="day-d">' + fmt(d.date) + badge + '</div>' +
+      '<div class="day-s">' + d.players.length + ' JUGADORES &middot; ' + tot + ' PARTIDAS</div>' +
+    '</div><div class="day-acts">' + acts.join('') + '</div></div>' +
+    '<div class="plist">' + filas + '</div>' +
+    timeline +
+    rachaLine +
+  '</div>';
+}
+
+function monthKey(iso){ return iso.slice(0,7); } // YYYY-MM
+function monthLabel(key){
+  const parts = key.split('-').map(Number);
+  return MESES[parts[1]-1] + ' ' + parts[0];
+}
+function renderMonths(){
+  const box = document.getElementById('months');
+  if(!state.days.length){
+    box.innerHTML = '<div class="empty pix">TODAVIA NO HAY JORNADAS</div>';
+    return;
+  }
+  const hoyKey = new Date().toISOString().slice(0,7); // el navegador mira la fecha de hoy solo
+  const byMonth = {};
+  state.days.forEach(d => {
+    const k = monthKey(d.date);
+    (byMonth[k] = byMonth[k] || []).push(d);
+  });
+  const keys = Object.keys(byMonth).sort().reverse();
+
+  box.innerHTML = keys.map(k => {
+    const dds = byMonth[k];
+    const t = {};
+    PLAYERS.forEach(p => t[p.id] = { pts:0, jugadas:0 });
+    let partidas = 0, bestLen = 0, bestHolders = [];
+    dds.forEach(d => {
+      const w = orderToWins(d.order);
+      const tot = dayTotal(d);
+      partidas += tot;
+      d.players.forEach(p => { if(t[p]){ t[p].pts += w[p] || 0; t[p].jugadas += tot; } });
+      const r = longestStreak(d.order);
+      if(r.len > bestLen){ bestLen = r.len; bestHolders = r.holders; }
+    });
+    const rows = PLAYERS.map(p => Object.assign({}, p, t[p.id]))
+      .filter(r => r.jugadas > 0)
+      .sort((a,b) => b.pts - a.pts || a.name.localeCompare(b.name));
+    const maxPts = Math.max(1, rows[0] ? rows[0].pts : 1);
+    const filas = rows.map((r,i) => {
+      const pct = Math.round(r.pts / maxPts * 100);
+      return '<div class="mrow"><div class="top">' +
+        '<span class="mpos">' + (i+1) + '</span>' +
+        '<span class="av" style="background:' + r.color + '"></span>' +
+        '<span class="mn" style="color:' + r.color + '">' + r.name + '</span>' +
+        '<span class="mpts">' + r.pts + '</span>' +
+      '</div><div class="mbar"><i style="width:' + pct + '%;background:' + r.color + '"></i></div></div>';
     }).join('');
+    const rachaTxt = bestLen >= 2
+      ? (bestLen + 'x &middot; ' + bestHolders.map(h => { const p = pById(h); return p ? p.name : h; }).join(', '))
+      : '-';
+    const actualBadge = (k === hoyKey) ? '<span class="closed-badge">&#9203; MES ACTUAL</span>' : '';
     return '<div class="day pix">' +
       '<div class="day-h"><div>' +
-        '<div class="day-d">' + fmt(d.date) + '</div>' +
-        '<div class="day-s">' + d.players.length + ' JUGADORES &middot; ' + tot + ' PARTIDAS</div>' +
-      '</div><div class="day-acts">' +
-        '<button class="mini" data-act="edit" data-day="' + d.id + '">EDITAR</button>' +
-        '<button class="mini" data-act="del" data-day="' + d.id + '">BORRAR</button>' +
+        '<div class="day-d">' + monthLabel(k) + actualBadge + '</div>' +
+        '<div class="day-s">' + dds.length + ' JORNADAS &middot; ' + partidas + ' PARTIDAS &middot; RACHA: ' + rachaTxt + '</div>' +
       '</div></div>' +
-      '<div class="plist">' + filas + '</div>' +
+      '<div class="mlist">' + filas + '</div>' +
     '</div>';
   }).join('');
 }
 
 function render(){
   renderGlobal();
+  renderMonths();
   renderDays();
+  rendered = true;
 }
 
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
     document.getElementById('tab-global').hidden = t.dataset.tab !== 'global';
+    document.getElementById('tab-mes').hidden    = t.dataset.tab !== 'mes';
     document.getElementById('tab-dias').hidden   = t.dataset.tab !== 'dias';
   });
 });
@@ -543,19 +729,31 @@ document.getElementById('days').addEventListener('click', e => {
   const d = state.days.filter(x => x.id === b.dataset.day)[0];
   if(!d) return;
   const act = b.dataset.act;
-  if(act === 'inc'){
-    d.wins[b.dataset.p] = (d.wins[b.dataset.p] || 0) + 1;
+  const editable = !d.closed;
+
+  if(act === 'win'){
+    if(!editable) return;
+    d.order = d.order || [];
+    d.order.push(b.dataset.p);
     boom(b);
     save();
-  } else if(act === 'dec'){
-    d.wins[b.dataset.p] = Math.max(0, (d.wins[b.dataset.p] || 0) - 1);
+  } else if(act === 'undo'){
+    if(!editable || !d.order || !d.order.length) return;
+    d.order.pop();
     save();
+  } else if(act === 'close'){
+    if(d.closed) return;
+    if(confirm('Cerrar la jornada del ' + fmt(d.date) + '? Ya no vas a poder anotar mas partidas ni editar quienes jugaron.')){
+      d.closed = true;
+      save();
+    }
   } else if(act === 'del'){
     if(confirm('Borrar la jornada del ' + fmt(d.date) + '?')){
       state.days = state.days.filter(x => x.id !== d.id);
       save();
     }
   } else if(act === 'edit'){
+    if(!editable) return;
     openDialog(d);
   }
 });
@@ -575,6 +773,7 @@ function openDialog(day){
 document.getElementById('newDay').addEventListener('click', () => { if(canEdit) openDialog(null); });
 
 document.getElementById('fSave').addEventListener('click', () => {
+  if(editing && editing.closed) return; // no se toca una jornada cerrada
   const date = document.getElementById('fDate').value;
   const sel = Array.prototype.slice.call(document.querySelectorAll('#fPlayers input:checked')).map(i => i.value);
   const err = document.getElementById('fErr');
@@ -584,15 +783,12 @@ document.getElementById('fSave').addEventListener('click', () => {
   if(choque){ err.textContent = 'YA EXISTE UNA JORNADA ESE DIA'; err.hidden = false; return; }
 
   if(editing){
-    const w = {};
-    sel.forEach(p => w[p] = editing.wins[p] || 0);
     editing.date = date;
     editing.players = sel;
-    editing.wins = w;
+    // si sacas a alguien que ya tenia partidas ganadas, esas partidas se pierden del historial
+    editing.order = (editing.order || []).filter(pid => sel.indexOf(pid) > -1);
   } else {
-    const w = {};
-    sel.forEach(p => w[p] = 0);
-    state.days.push({ id:'d' + Date.now(), date:date, players:sel, wins:w });
+    state.days.push({ id:'d' + Date.now(), date:date, players:sel, order:[], closed:false });
   }
   editing = null;
   dlg.close();
@@ -616,7 +812,7 @@ document.getElementById('importFile').addEventListener('change', e => {
     try{
       const d = JSON.parse(r.result);
       if(!d || !Array.isArray(d.days)) throw new Error('mal');
-      state = d;
+      state = normalizeState(d);
       save();
     }catch(err){
       alert('Ese archivo no sirve');
@@ -837,7 +1033,7 @@ const ADMIN   = 'jarb2299@gmail.com';
       }
       lastRemoteEmpty = false;
       applyingRemote = true;
-      state = v;
+      state = normalizeState(v);
       try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
       render();
       applyingRemote = false;
