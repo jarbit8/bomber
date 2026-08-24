@@ -271,6 +271,7 @@ body.shake{animation:shake .5s steps(2,end) 2}
   100%{box-shadow:0 0 0 46px rgba(255,138,31,0);opacity:0}
 }
 footer{text-align:center;margin-top:34px;font-size:7px;color:#55556e;line-height:2.6}
+.credit{margin-top:18px;font-size:7px;color:#3f3f56;letter-spacing:1px}
 .live{display:inline-flex;align-items:center;gap:7px;font-size:7px;color:var(--dim);border:3px solid var(--line);background:var(--panel2);padding:8px 11px}
 .live i{width:8px;height:8px;border-radius:50%;background:#77778f}
 .live.on{color:#4dd97a}
@@ -283,7 +284,7 @@ body.readonly .winbtn,
 body.readonly #newDay,
 body.readonly .day-acts,
 body.readonly #importBtn{display:none}
-body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:pre-line;color:var(--fire)}
+body.readonly .hint::after{content:' \A SOLO JARBIT PUEDE EDITAR';white-space:pre-line;color:var(--fire)}
 .empty{padding:26px;text-align:center;font-size:9px;color:var(--dim);line-height:2}
 @media(max-width:560px){
   .podium{grid-template-columns:1fr;align-items:stretch}
@@ -358,6 +359,7 @@ body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:
     <button class="mini" id="exportBtn">EXPORTAR</button>
     <button class="mini" id="importBtn">IMPORTAR</button>
     <input type="file" id="importFile" accept="application/json" hidden>
+    <div class="credit">Powered by Jarbit</div>
   </footer>
 </div>
 
@@ -1138,8 +1140,9 @@ document.addEventListener('pointerdown', () => {
 /* Para que el marcador se comparta entre todos hacen falta 2 cosas en la consola de Firebase:
    1) pegar aqui abajo la Web API Key del proyecto bomber-3a196
    2) las reglas de la base (estan en el README) */
-const API_KEY = 'AIzaSyCY4vEhhXHC9mNtxX0LjalqygAKyXLWDKA';
-const ADMIN   = 'jarb2299@gmail.com';
+const API_KEY   = 'AIzaSyCY4vEhhXHC9mNtxX0LjalqygAKyXLWDKA';
+const ADMIN      = 'jarb2299@gmail.com';
+const ADMIN_NAME = 'JARBIT'; // nombre que se muestra en vez del correo
 
 (async function cloud(){
   const CDN = 'https://www.gstatic.com/firebasejs/10.12.0/';
@@ -1169,8 +1172,9 @@ const ADMIN   = 'jarb2299@gmail.com';
       btn.hidden = false;
       authMod.onAuthStateChanged(auth, u => {
         setEdit(!!u && u.email === ADMIN);
-        btn.textContent = u ? ('SALIR &middot; ' + u.email.split('@')[0]).replace('&middot;','·') : 'ENTRAR PARA EDITAR';
-        if(u && u.email !== ADMIN) setLive(true, 'SOLO MIRANDO &middot; EDITA ' + ADMIN.split('@')[0].toUpperCase());
+        const quien = u ? (u.email === ADMIN ? ADMIN_NAME : u.email.split('@')[0]) : '';
+        btn.textContent = u ? ('SALIR · ' + quien) : 'ENTRAR PARA EDITAR';
+        if(u && u.email !== ADMIN) setLive(true, 'SOLO MIRANDO &middot; EDITA ' + ADMIN_NAME);
         maybeSeed();
       });
       btn.addEventListener('click', () => {
