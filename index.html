@@ -795,6 +795,7 @@ const ADMIN   = 'jarb2299@gmail.com';
     if(!API_KEY){
       setEdit(true);
     } else {
+      setEdit(false); // hasta que Firebase confirme quien es, nadie edita
       const authMod = await import(CDN + 'firebase-auth.js');
       const auth = authMod.getAuth(app);
       const btn = document.getElementById('authBtn');
@@ -803,6 +804,7 @@ const ADMIN   = 'jarb2299@gmail.com';
         setEdit(!!u && u.email === ADMIN);
         btn.textContent = u ? ('SALIR &middot; ' + u.email.split('@')[0]).replace('&middot;','·') : 'ENTRAR PARA EDITAR';
         if(u && u.email !== ADMIN) setLive(true, 'SOLO MIRANDO &middot; EDITA ' + ADMIN.split('@')[0].toUpperCase());
+        maybeSeed();
       });
       btn.addEventListener('click', () => {
         if(auth.currentUser) authMod.signOut(auth);
@@ -812,13 +814,28 @@ const ADMIN   = 'jarb2299@gmail.com';
 
     cloudSet = data => dbMod.set(R, data);
 
+    // evita machacar Firebase con reintentos: solo el admin logueado puede
+    // sembrar la base la primera vez, y solo lo intenta una vez por sesion
+    let lastRemoteEmpty = false;
+    let seedAttempted = false;
+    function maybeSeed(){
+      if(!canEdit || !cloudSet || !lastRemoteEmpty || seedAttempted) return;
+      seedAttempted = true;
+      setLive(true, 'EN VIVO &middot; SUBIENDO MARCADOR');
+      cloudSet(state)
+        .then(() => setLive(true, 'EN VIVO &middot; TODOS VEN LO MISMO'))
+        .catch(() => { seedAttempted = false; setLive(false, 'NO SE PUDO SUBIR EL MARCADOR'); });
+    }
+
     dbMod.onValue(R, snap => {
       const v = snap.val();
       if(!v || !Array.isArray(v.days)){
-        setLive(true, 'EN VIVO &middot; SUBIENDO MARCADOR');
-        cloudSet(state).then(() => setLive(true, 'EN VIVO &middot; TODOS VEN LO MISMO'));
+        lastRemoteEmpty = true;
+        setLive(true, canEdit ? 'EN VIVO &middot; SUBIENDO MARCADOR' : 'EN VIVO &middot; SIN JORNADAS TODAVIA');
+        maybeSeed();
         return;
       }
+      lastRemoteEmpty = false;
       applyingRemote = true;
       state = v;
       try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
