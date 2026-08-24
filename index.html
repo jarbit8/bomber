@@ -316,6 +316,7 @@ body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:
 
   <nav class="tabs">
     <button class="tab on" data-tab="global">&#127942; GLOBAL</button>
+    <button class="tab" data-tab="grupo">&#128101; POR GRUPO</button>
     <button class="tab" data-tab="mes">&#128198; POR MES</button>
     <button class="tab" data-tab="dias">&#128197; POR DIAS</button>
   </nav>
@@ -324,6 +325,11 @@ body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:
     <div class="podium" id="podium"></div>
     <div class="rank" id="ranking"></div>
     <div class="gstats" id="gstats"></div>
+  </section>
+
+  <section id="tab-grupo" hidden>
+    <p class="hint" style="margin-bottom:16px">CADA COMBINACION DISTINTA DE JUGADORES TIENE SU PROPIA TABLA</p>
+    <div id="groups"></div>
   </section>
 
   <section id="tab-mes" hidden>
@@ -717,8 +723,73 @@ function renderMonths(){
   }).join('');
 }
 
+/* agrupa las jornadas por el conjunto exacto de jugadores que participo:
+   si un dia falta parce, o si se suma gallo, es una combinacion distinta
+   y arma su propia tabla, separada del resto */
+function groupKey(players){
+  return players.slice().sort().join('|');
+}
+function renderGroups(){
+  const box = document.getElementById('groups');
+  if(!state.days.length){
+    box.innerHTML = '<div class="empty pix">TODAVIA NO HAY JORNADAS</div>';
+    return;
+  }
+  const byGroup = {};
+  state.days.forEach(d => {
+    const k = groupKey(d.players);
+    (byGroup[k] = byGroup[k] || { players: d.players, days: [] }).days.push(d);
+  });
+  const groups = Object.keys(byGroup).map(k => byGroup[k]).sort((a,b) => {
+    const da = a.days.reduce((m,d) => d.date > m ? d.date : m, '');
+    const db = b.days.reduce((m,d) => d.date > m ? d.date : m, '');
+    return db.localeCompare(da);
+  });
+
+  box.innerHTML = groups.map(g => {
+    const dds = g.days;
+    const t = {};
+    g.players.forEach(p => t[p] = { pts:0, jugadas:0 });
+    let partidas = 0, bestLen = 0, bestHolders = [];
+    dds.forEach(d => {
+      const w = orderToWins(d.order);
+      const tot = dayTotal(d);
+      partidas += tot;
+      d.players.forEach(p => { if(t[p]){ t[p].pts += w[p] || 0; t[p].jugadas += tot; } });
+      const r = longestStreak(d.order);
+      if(r.len > bestLen){ bestLen = r.len; bestHolders = r.holders; }
+    });
+    // los del grupo, en el orden natural del roster + invitados
+    const order = allPlayers().map(p => p.id).filter(id => g.players.indexOf(id) > -1);
+    const rows = order.map(id => Object.assign({}, pById(id), t[id]))
+      .sort((a,b) => b.pts - a.pts || a.name.localeCompare(b.name));
+    const maxPts = Math.max(1, rows[0] ? rows[0].pts : 1);
+    const filas = rows.map((r,i) => {
+      const pct = Math.round(r.pts / maxPts * 100);
+      return '<div class="mrow"><div class="top">' +
+        '<span class="mpos">' + (i+1) + '</span>' +
+        '<span class="av" style="background:' + r.color + '"></span>' +
+        '<span class="mn" style="color:' + r.color + '">' + r.name + '</span>' +
+        '<span class="mpts">' + r.pts + '</span>' +
+      '</div><div class="mbar"><i style="width:' + pct + '%;background:' + r.color + '"></i></div></div>';
+    }).join('');
+    const rachaTxt = bestLen >= 2
+      ? (bestLen + 'x &middot; ' + bestHolders.map(h => { const p = pById(h); return p ? p.name : h; }).join(', '))
+      : '-';
+    const groupLabel = order.map(id => { const p = pById(id); return p ? p.name : id; }).join(' + ');
+    return '<div class="day pix">' +
+      '<div class="day-h"><div>' +
+        '<div class="day-d">' + groupLabel + '</div>' +
+        '<div class="day-s">' + dds.length + ' JORNADAS &middot; ' + partidas + ' PARTIDAS &middot; RACHA: ' + rachaTxt + '</div>' +
+      '</div></div>' +
+      '<div class="mlist">' + filas + '</div>' +
+    '</div>';
+  }).join('');
+}
+
 function render(){
   renderGlobal();
+  renderGroups();
   renderMonths();
   renderDays();
   rendered = true;
@@ -728,6 +799,7 @@ document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
     document.getElementById('tab-global').hidden = t.dataset.tab !== 'global';
+    document.getElementById('tab-grupo').hidden  = t.dataset.tab !== 'grupo';
     document.getElementById('tab-mes').hidden    = t.dataset.tab !== 'mes';
     document.getElementById('tab-dias').hidden   = t.dataset.tab !== 'dias';
   });
