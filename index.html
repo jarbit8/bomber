@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bomber: La Nueva Era</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pix: 'Press Start 2P', 'Courier New', monospace;
+  --bg:#12121f;
+  --panel:#232338;
+  --panel2:#2e2e47;
+  --line:#0a0a12;
+  --text:#f2f2f7;
+  --dim:#9a9ab8;
+  --fire:#ff8a1f;
+  --fire2:#ffd23f;
+  --c-sergio:#ff4d4d;
+  --c-joel:#4d9bff;
+  --c-gonzalo:#4dd97a;
+  --c-parce:#ffd23f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--pix);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:18px 14px 60px;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size:32px 32px;
+}
+.wrap{max-width:960px;margin:0 auto}
+
+/* caja pixel */
+.pix{
+  background:var(--panel);
+  border:4px solid var(--line);
+  box-shadow:inset -4px -4px 0 rgba(0,0,0,.35), inset 4px 4px 0 rgba(255,255,255,.07), 6px 6px 0 rgba(0,0,0,.45);
+}
+
+/* cabecera */
+header{text-align:center;margin-bottom:22px}
+h1{
+  font-size:clamp(18px,4.4vw,34px);
+  line-height:1.5;
+  margin:0;
+  letter-spacing:2px;
+  color:var(--fire2);
+  text-shadow:3px 3px 0 #b32d00, 6px 6px 0 rgba(0,0,0,.55);
+}
+h1 .era{display:block;font-size:.52em;color:#fff;text-shadow:3px 3px 0 #2a53a8,5px 5px 0 rgba(0,0,0,.5);margin-top:10px}
+.tagline{font-size:9px;color:var(--dim);margin-top:14px;line-height:1.9}
+.bomb{display:inline-block;animation:tick .9s steps(2,end) infinite}
+@keyframes tick{50%{transform:translateY(-4px) rotate(-6deg)}}
+
+/* pestanas */
+.tabs{display:flex;gap:10px;justify-content:center;margin:22px 0 20px;flex-wrap:wrap}
+.tab{
+  font-family:var(--pix);font-size:10px;cursor:pointer;
+  padding:14px 18px;color:var(--dim);background:var(--panel2);
+  border:4px solid var(--line);
+  box-shadow:inset -4px -4px 0 rgba(0,0,0,.35), 5px 5px 0 rgba(0,0,0,.45);
+}
+.tab:active{transform:translate(3px,3px)}
+.tab.on{background:var(--fire);color:#1a1000}
+
+/* global */
+.podium{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:end;margin-bottom:26px}
+.pod{padding:12px 8px;text-align:center}
+.pod .medal{font-size:22px;display:block;margin-bottom:8px}
+.pod .nm{font-size:11px;margin-bottom:8px;word-break:break-word}
+.pod .pts{font-size:18px;color:var(--fire2)}
+.pod .lbl{font-size:7px;color:var(--dim);margin-top:6px}
+.pod.p1{padding-top:26px;padding-bottom:26px}
+.pod.p2{padding-top:16px}
+.pod.p3{padding-top:10px}
+
+.rank{display:flex;flex-direction:column;gap:10px}
+.row{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;padding:14px}
+.pos{font-size:13px;color:var(--dim);text-align:center}
+.who{display:flex;align-items:center;gap:10px;min-width:0}
+.av{width:26px;height:26px;flex:none;border:3px solid var(--line);box-shadow:inset -3px -3px 0 rgba(0,0,0,.35)}
+.who .n{font-size:11px}
+.bar{height:10px;background:#1a1a2b;border:3px solid var(--line);margin-top:9px;overflow:hidden}
+.bar i{display:block;height:100%;transition:width .35s steps(12,end)}
+.meta{font-size:7px;color:var(--dim);margin-top:7px;line-height:1.7}
+.score{font-size:20px;color:var(--fire2);text-align:right;white-space:nowrap}
+.score small{display:block;font-size:7px;color:var(--dim);margin-top:6px}
+
+.gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:22px}
+.gs{padding:14px;text-align:center}
+.gs b{display:block;font-size:17px;color:var(--fire);margin-bottom:8px}
+.gs span{font-size:7px;color:var(--dim);line-height:1.8}
+
+/* dias */
+.bar-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.btn{
+  font-family:var(--pix);font-size:9px;cursor:pointer;padding:13px 15px;
+  color:#1a1000;background:var(--fire2);border:4px solid var(--line);
+  box-shadow:inset -4px -4px 0 rgba(0,0,0,.25), 5px 5px 0 rgba(0,0,0,.45);
+}
+.btn:active{transform:translate(3px,3px)}
+.btn.ghost{background:var(--panel2);color:var(--dim)}
+.hint{font-size:7px;color:var(--dim);line-height:1.9}
+
+.day{padding:16px;margin-bottom:16px}
+.day-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;border-bottom:4px solid var(--line);padding-bottom:14px;margin-bottom:14px}
+.day-d{font-size:11px;color:var(--fire2);line-height:1.7}
+.day-s{font-size:7px;color:var(--dim);margin-top:8px;line-height:1.9}
+.day-acts{display:flex;gap:8px}
+.mini{font-family:var(--pix);font-size:8px;cursor:pointer;padding:9px 10px;color:var(--dim);background:var(--panel2);border:3px solid var(--line)}
+.mini:active{transform:translate(2px,2px)}
+.plist{display:flex;flex-direction:column;gap:10px}
+.pl{display:grid;grid-template-columns:26px 1fr auto auto;gap:10px;align-items:center;background:#1c1c2e;border:3px solid var(--line);padding:10px}
+.pl .pn{font-size:10px}
+.pl .pv{font-size:15px;color:var(--fire2);min-width:26px;text-align:center}
+.pmb{display:flex;gap:6px}
+.step{font-family:var(--pix);font-size:11px;width:32px;height:32px;cursor:pointer;color:#1a1000;background:var(--fire);border:3px solid var(--line);line-height:1}
+.step.minus{background:var(--panel2);color:var(--dim)}
+.step:active{transform:translate(2px,2px)}
+.crown{font-size:12px;margin-left:6px}
+
+/* dialogo */
+dialog{border:none;background:transparent;padding:0;color:var(--text)}
+dialog::backdrop{background:rgba(5,5,12,.82)}
+.modal{padding:20px;max-width:440px;width:92vw}
+.modal h3{font-size:12px;margin:0 0 18px;color:var(--fire2)}
+label.f{display:block;font-size:8px;color:var(--dim);margin:0 0 9px}
+input[type=date]{
+  font-family:var(--pix);font-size:10px;width:100%;padding:12px;
+  background:#1c1c2e;color:var(--text);border:3px solid var(--line);margin-bottom:18px;
+}
+.chk{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:20px}
+.chk label{display:flex;align-items:center;gap:8px;font-size:9px;background:#1c1c2e;border:3px solid var(--line);padding:10px;cursor:pointer}
+.chk input{width:15px;height:15px;accent-color:#ff8a1f}
+.modal-acts{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.err{font-size:8px;color:#ff6b6b;margin-bottom:14px;line-height:1.8}
+
+/* ============ INTRO ============ */
+.intro{position:fixed;inset:0;z-index:9999;background:#06060c;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.intro.out{animation:introOut .55s ease forwards}
+@keyframes introOut{to{opacity:0;visibility:hidden}}
+body.locked{overflow:hidden}
+
+.igrid{position:absolute;inset:0;display:grid;justify-content:center;align-content:center;gap:4px}
+.blk{
+  background:#3a3a5c;border:3px solid #14141f;
+  box-shadow:inset -5px -5px 0 rgba(0,0,0,.45), inset 5px 5px 0 rgba(255,255,255,.07);
+  opacity:0;transform:scale(.2);animation:blkIn .28s steps(3,end) forwards;
+}
+.blk.hard{background:#20203a;box-shadow:inset -5px -5px 0 rgba(0,0,0,.6), inset 5px 5px 0 rgba(255,255,255,.05)}
+@keyframes blkIn{to{opacity:1;transform:scale(1)}}
+.blk.blown{animation:blkOut .8s cubic-bezier(.3,.9,.6,1) forwards}
+@keyframes blkOut{
+  0%{opacity:1}
+  100%{opacity:0;transform:translate(var(--bx),var(--by)) rotate(var(--br)) scale(.3)}
+}
+
+.ibomb{position:absolute;left:50%;top:50%;margin:-46px 0 0 -46px;width:92px;height:92px;z-index:4;opacity:0}
+.ibomb.drop{animation:bombDrop .5s cubic-bezier(.55,0,1,1) forwards}
+@keyframes bombDrop{
+  0%{opacity:1;transform:translateY(-75vh) scale(.6)}
+  75%{opacity:1;transform:translateY(0) scale(1)}
+  85%{transform:translateY(0) scale(1.25,.72)}
+  93%{transform:translateY(-10px) scale(.92,1.1)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+.ibomb.gone{animation:none !important;opacity:0 !important}
+.bball{
+  position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 33% 28%, #7b7b9c 0 9%, #26263a 42%, #0a0a12 100%);
+  border:4px solid #000;box-shadow:0 0 0 5px #2c2c42, 0 14px 0 rgba(0,0,0,.5);
+}
+.ibomb.tick .bball{animation:bpulse .28s steps(2,end) infinite}
+@keyframes bpulse{50%{transform:scale(1.14)}}
+.bshine{position:absolute;left:20%;top:20%;width:15px;height:15px;border-radius:50%;background:#fff;opacity:.9}
+.fuse{position:absolute;left:52%;top:-24px;width:8px;height:30px;background:#c8a15a;transform:rotate(14deg);transform-origin:bottom center}
+.spark{
+  position:absolute;left:calc(52% + 10px);top:-34px;width:16px;height:16px;border-radius:50%;
+  background:#ffe98a;box-shadow:0 0 16px 8px rgba(255,138,31,.85);
+  animation:sparkle .16s steps(2,end) infinite;
+}
+@keyframes sparkle{50%{transform:scale(.45) translateY(3px);background:#ff8a1f}}
+
+.cd{position:absolute;left:0;right:0;top:calc(50% - 185px);line-height:1;text-align:center;z-index:5;font-size:clamp(48px,14vw,120px);color:#fff;text-shadow:5px 5px 0 #b32d00,0 0 30px rgba(255,138,31,.8);opacity:0}
+.cd.on{animation:cdPop .3s steps(4,end) forwards}
+@keyframes cdPop{0%{opacity:1;transform:scale(2.4)}70%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
+
+.blast{position:absolute;left:50%;top:50%;z-index:3;opacity:0}
+.blast.go{opacity:1}
+.arm{position:absolute;left:0;top:0;background:linear-gradient(90deg,#fff,#ffd23f 25%,#ff8a1f 70%,#b32d00);box-shadow:0 0 60px 18px rgba(255,138,31,.75)}
+.blast.go .arm.h{width:0;height:120px;margin-top:-60px;animation:armH .45s steps(7,end) forwards}
+.blast.go .arm.v{height:0;width:120px;margin-left:-60px;animation:armV .45s steps(7,end) forwards}
+@keyframes armH{0%{width:0;margin-left:0}100%{width:260vw;margin-left:-130vw}}
+@keyframes armV{0%{height:0;margin-top:0}100%{height:260vh;margin-top:-130vh}}
+.blast.go .core{position:absolute;left:0;top:0;width:0;height:0;border-radius:50%;background:radial-gradient(circle,#fff 0 30%,#ffd23f 55%,rgba(255,138,31,0) 72%);animation:coreOut .55s steps(8,end) forwards}
+@keyframes coreOut{0%{width:0;height:0;margin:0}100%{width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;opacity:0}}
+.blast.fade{animation:blastFade .7s ease-out forwards}
+@keyframes blastFade{to{opacity:0}}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:6;pointer-events:none}
+.flash.on{animation:flashOut .5s ease-out forwards}
+@keyframes flashOut{0%{opacity:1}100%{opacity:0}}
+body.shake{animation:shake .5s steps(2,end) 2}
+@keyframes shake{
+  0%{transform:translate(0,0)}25%{transform:translate(-9px,5px)}
+  50%{transform:translate(8px,-6px)}75%{transform:translate(-5px,-4px)}100%{transform:translate(0,0)}
+}
+
+.ititle{position:relative;z-index:7;text-align:center;opacity:0;padding:0 16px}
+.ititle.on{animation:slam .45s cubic-bezier(.2,1.7,.35,1) forwards}
+@keyframes slam{0%{opacity:0;transform:scale(3.2)}65%{opacity:1;transform:scale(.9)}100%{opacity:1;transform:scale(1)}}
+.ititle .l1{font-size:clamp(26px,9vw,66px);color:var(--fire2);letter-spacing:3px;text-shadow:4px 4px 0 #b32d00,8px 8px 0 rgba(0,0,0,.6)}
+.ititle .l2{font-size:clamp(12px,3.6vw,26px);color:#fff;margin-top:16px;letter-spacing:2px;text-shadow:3px 3px 0 #2a53a8,6px 6px 0 rgba(0,0,0,.5)}
+.iplayers{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+.ip{display:flex;align-items:center;gap:8px;font-size:10px;background:rgba(20,20,32,.9);border:3px solid #000;padding:10px 12px;opacity:0;transform:translateY(14px)}
+.ip.on{animation:ipIn .28s steps(3,end) forwards}
+@keyframes ipIn{to{opacity:1;transform:translateY(0)}}
+.ip .sq{width:16px;height:16px;border:3px solid #000}
+.iready{margin-top:26px;font-size:clamp(10px,3vw,15px);color:var(--fire);opacity:0}
+.iready.on{animation:blink .45s steps(2,end) infinite}
+@keyframes blink{50%{opacity:1}0%,100%{opacity:.15}}
+.skip{
+  position:absolute;right:14px;bottom:14px;z-index:8;font-family:var(--pix);font-size:8px;cursor:pointer;
+  color:var(--dim);background:rgba(30,30,48,.9);border:3px solid #000;padding:11px 13px;
+}
+.skip:hover{color:var(--fire2)}
+
+/* explosion */
+.boom{position:fixed;pointer-events:none;width:12px;height:12px;border-radius:50%;z-index:99;animation:boom .45s steps(5,end) forwards}
+@keyframes boom{
+  0%{box-shadow:0 0 0 0 var(--fire2);opacity:1}
+  100%{box-shadow:0 0 0 46px rgba(255,138,31,0);opacity:0}
+}
+footer{text-align:center;margin-top:34px;font-size:7px;color:#55556e;line-height:2.6}
+.live{display:inline-flex;align-items:center;gap:7px;font-size:7px;color:var(--dim);border:3px solid var(--line);background:var(--panel2);padding:8px 11px}
+.live i{width:8px;height:8px;border-radius:50%;background:#77778f}
+.live.on{color:#4dd97a}
+.live.on i{background:#4dd97a;animation:pulseDot 1.2s steps(2,end) infinite}
+.live.off{color:#ffa04d}
+.live.off i{background:#ffa04d}
+@keyframes pulseDot{50%{opacity:.25}}
+/* modo solo lectura: nadie mas toca el marcador */
+body.readonly .step,
+body.readonly #newDay,
+body.readonly .day-acts,
+body.readonly #importBtn{display:none}
+body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:pre-line;color:var(--fire)}
+.empty{padding:26px;text-align:center;font-size:9px;color:var(--dim);line-height:2}
+@media(max-width:560px){
+  .podium{grid-template-columns:1fr;align-items:stretch}
+  .row{grid-template-columns:30px 1fr auto;gap:8px}
+  .pl{grid-template-columns:22px 1fr auto;grid-template-areas:"a b c" ". d d"}
+  .pl .av{grid-area:a}.pl .pn{grid-area:b}.pl .pv{grid-area:c}.pl .pmb{grid-area:d;justify-content:flex-end;margin-top:8px}
+}
+</style>
+</head>
+<body class="locked">
+
+<div class="intro" id="intro">
+  <div class="igrid" id="igrid"></div>
+  <div class="blast" id="blast">
+    <i class="arm h"></i><i class="arm v"></i><i class="core"></i>
+  </div>
+  <div class="ibomb" id="ibomb">
+    <span class="fuse"></span><span class="spark"></span>
+    <span class="bball"></span><span class="bshine"></span>
+  </div>
+  <div class="cd" id="cd"></div>
+  <div class="ititle" id="ititle">
+    <div class="l1">BOMBER</div>
+    <div class="l2">LA NUEVA ERA</div>
+    <div class="iplayers" id="iplayers"></div>
+    <div class="iready" id="iready">EL MARCADOR ESTA LISTO</div>
+  </div>
+  <div class="flash" id="flash"></div>
+  <button class="skip" id="skip">SALTAR &#9654;&#9654;</button>
+</div>
+
+<div class="wrap">
+
+  <header>
+    <h1><span class="bomb">&#128163;</span> BOMBER <span class="era">LA NUEVA ERA</span></h1>
+    <p class="tagline">MARCADOR OFICIAL &middot; 1 PARTIDA GANADA = 1 PUNTO</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab on" data-tab="global">&#127942; GLOBAL</button>
+    <button class="tab" data-tab="dias">&#128197; POR DIAS</button>
+  </nav>
+
+  <section id="tab-global">
+    <div class="podium" id="podium"></div>
+    <div class="rank" id="ranking"></div>
+    <div class="gstats" id="gstats"></div>
+  </section>
+
+  <section id="tab-dias" hidden>
+    <div class="bar-top">
+      <button class="btn" id="newDay">+ NUEVA JORNADA</button>
+      <p class="hint">CADA + SUMA UNA PARTIDA GANADA<br>SE GUARDA SOLO Y ACTUALIZA EL GLOBAL</p>
+    </div>
+    <div id="days"></div>
+  </section>
+
+  <footer>
+    <span class="live" id="live"><i></i>CONECTANDO...</span>
+    <button class="mini" id="authBtn" hidden>ENTRAR PARA EDITAR</button><br>
+    SERGIO &middot; JOEL &middot; GONZALO &middot; PARCE<br>
+    <button class="mini" id="exportBtn">EXPORTAR</button>
+    <button class="mini" id="importBtn">IMPORTAR</button>
+    <input type="file" id="importFile" accept="application/json" hidden>
+  </footer>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" class="modal pix">
+    <h3 id="dlgTitle">NUEVA JORNADA</h3>
+    <label class="f">FECHA DE LA JORNADA</label>
+    <input type="date" id="fDate">
+    <label class="f">QUIENES JUGARON</label>
+    <div class="chk" id="fPlayers"></div>
+    <p class="err" id="fErr" hidden></p>
+    <div class="modal-acts">
+      <button class="btn ghost" type="submit" value="cancel">CANCELAR</button>
+      <button class="btn" id="fSave" type="button">GUARDAR</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const KEY = 'bomber-nueva-era-v1';
+
+const PLAYERS = [
+  { id:'sergio',  name:'SERGIO',  color:'var(--c-sergio)'  },
+  { id:'joel',    name:'JOEL',    color:'var(--c-joel)'    },
+  { id:'gonzalo', name:'GONZALO', color:'var(--c-gonzalo)' },
+  { id:'parce',   name:'PARCE',   color:'var(--c-parce)'   }
+];
+const pById = id => PLAYERS.find(p => p.id === id);
+
+const SEED = {
+  days: [
+    { id:'d1', date:'2026-08-18',
+      players:['sergio','joel','gonzalo'],
+      wins:{ sergio:2, joel:1, gonzalo:2 } }
+  ]
+};
+
+let state = load();
+let editing = null;
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return JSON.parse(JSON.stringify(SEED));
+    const d = JSON.parse(raw);
+    return (d && Array.isArray(d.days)) ? d : JSON.parse(JSON.stringify(SEED));
+  }catch(e){
+    return JSON.parse(JSON.stringify(SEED));
+  }
+}
+function save(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }catch(e){
+    // navegador sin almacenamiento: al menos que el marcador siga vivo en pantalla
+  }
+  cloudPush();
+  render();
+}
+
+/* sincronizacion en la nube: se llena desde el bloque de firebase de abajo */
+let cloudSet = null;
+let applyingRemote = false;
+function cloudPush(){
+  if(!cloudSet || applyingRemote) return;
+  try{ cloudSet(state); }catch(e){}
+}
+let canEdit = true;
+function setEdit(v){
+  canEdit = v;
+  document.body.classList.toggle('readonly', !v);
+}
+function setLive(ok, txt){
+  const el = document.getElementById('live');
+  if(!el) return;
+  el.className = 'live ' + (ok ? 'on' : 'off');
+  el.innerHTML = '<i></i>' + txt;
+}
+
+function sortedDays(){
+  return state.days.slice().sort((a,b) => b.date.localeCompare(a.date));
+}
+function dayTotal(d){
+  return d.players.reduce((s,p) => s + (d.wins[p] || 0), 0);
+}
+function totals(){
+  const t = {};
+  PLAYERS.forEach(p => t[p.id] = { pts:0, jugadas:0, jornadas:0, ganadas:0 });
+  state.days.forEach(d => {
+    const tot = dayTotal(d);
+    let max = 0;
+    d.players.forEach(p => { max = Math.max(max, d.wins[p] || 0); });
+    d.players.forEach(p => {
+      if(!t[p]) return;
+      t[p].pts      += d.wins[p] || 0;
+      t[p].jugadas  += tot;
+      t[p].jornadas += 1;
+      if(max > 0 && (d.wins[p] || 0) === max) t[p].ganadas += 1;
+    });
+  });
+  return PLAYERS.map(p => Object.assign({}, p, t[p.id]))
+    .sort((a,b) => b.pts - a.pts || b.ganadas - a.ganadas || a.name.localeCompare(b.name));
+}
+
+const MESES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+const DIAS  = ['DOMINGO','LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO'];
+function fmt(iso){
+  const parts = iso.split('-').map(Number);
+  const dt = new Date(parts[0], parts[1]-1, parts[2]);
+  return DIAS[dt.getDay()] + ' ' + parts[2] + ' DE ' + MESES[parts[1]-1] + ' ' + parts[0];
+}
+
+function renderGlobal(){
+  const rows = totals();
+  const maxPts = Math.max(1, rows[0] ? rows[0].pts : 1);
+  const medals = ['&#129351;','&#129352;','&#129353;'];
+
+  document.getElementById('podium').innerHTML = [1,0,2].map(i => {
+    const r = rows[i];
+    if(!r) return '';
+    return '<div class="pod pix p' + (i+1) + '">' +
+      '<span class="medal">' + medals[i] + '</span>' +
+      '<div class="nm" style="color:' + r.color + '">' + r.name + '</div>' +
+      '<div class="pts">' + r.pts + '</div>' +
+      '<div class="lbl">PUNTOS</div></div>';
+  }).join('');
+
+  document.getElementById('ranking').innerHTML = rows.map((r,i) => {
+    const pct = Math.round(r.pts / maxPts * 100);
+    const ef  = r.jugadas ? Math.round(r.pts / r.jugadas * 100) : 0;
+    return '<div class="row pix">' +
+      '<div class="pos">' + (i+1) + '</div>' +
+      '<div><div class="who">' +
+        '<span class="av" style="background:' + r.color + '"></span>' +
+        '<span class="n" style="color:' + r.color + '">' + r.name + '</span>' +
+      '</div>' +
+      '<div class="bar"><i style="width:' + pct + '%;background:' + r.color + '"></i></div>' +
+      '<div class="meta">' + r.jornadas + ' JORNADAS &middot; ' + r.jugadas + ' PARTIDAS &middot; ' + ef + '% EFECTIVIDAD</div>' +
+      '</div>' +
+      '<div class="score">' + r.pts + '<small>PTS</small></div>' +
+    '</div>';
+  }).join('');
+
+  const partidas = state.days.reduce((s,d) => s + dayTotal(d), 0);
+  const top = rows[0] ? rows[0].pts : 0;
+  const empatados = rows.filter(r => r.pts === top && top > 0);
+  const lider = top === 0 ? '-' : (empatados.length > 1 ? 'EMPATE' : empatados[0].name);
+  document.getElementById('gstats').innerHTML =
+    stat(partidas, 'PARTIDAS JUGADAS') +
+    stat(state.days.length, 'JORNADAS') +
+    stat(lider, 'AL MANDO') +
+    stat(top + ' PTS', 'PUNTAJE MAS ALTO');
+}
+function stat(v, l){
+  return '<div class="gs pix"><b>' + v + '</b><span>' + l + '</span></div>';
+}
+
+function renderDays(){
+  const days = sortedDays();
+  const box = document.getElementById('days');
+  if(!days.length){
+    box.innerHTML = '<div class="empty pix">TODAVIA NO HAY JORNADAS<br>DALE A "NUEVA JORNADA"</div>';
+    return;
+  }
+  box.innerHTML = days.map(d => {
+    const tot = dayTotal(d);
+    let max = 0;
+    d.players.forEach(p => { max = Math.max(max, d.wins[p] || 0); });
+    const lista = d.players.slice().sort((a,b) => (d.wins[b]||0) - (d.wins[a]||0));
+    const filas = lista.map(pid => {
+      const p = pById(pid);
+      if(!p) return '';
+      const w = d.wins[pid] || 0;
+      const rey = (max > 0 && w === max) ? '<span class="crown">&#128081;</span>' : '';
+      return '<div class="pl">' +
+        '<span class="av" style="background:' + p.color + '"></span>' +
+        '<span class="pn" style="color:' + p.color + '">' + p.name + rey + '</span>' +
+        '<span class="pv">' + w + '</span>' +
+        '<span class="pmb">' +
+          '<button class="step minus" data-act="dec" data-day="' + d.id + '" data-p="' + pid + '">-</button>' +
+          '<button class="step" data-act="inc" data-day="' + d.id + '" data-p="' + pid + '">+</button>' +
+        '</span>' +
+      '</div>';
+    }).join('');
+    return '<div class="day pix">' +
+      '<div class="day-h"><div>' +
+        '<div class="day-d">' + fmt(d.date) + '</div>' +
+        '<div class="day-s">' + d.players.length + ' JUGADORES &middot; ' + tot + ' PARTIDAS</div>' +
+      '</div><div class="day-acts">' +
+        '<button class="mini" data-act="edit" data-day="' + d.id + '">EDITAR</button>' +
+        '<button class="mini" data-act="del" data-day="' + d.id + '">BORRAR</button>' +
+      '</div></div>' +
+      '<div class="plist">' + filas + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function render(){
+  renderGlobal();
+  renderDays();
+}
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
+    document.getElementById('tab-global').hidden = t.dataset.tab !== 'global';
+    document.getElementById('tab-dias').hidden   = t.dataset.tab !== 'dias';
+  });
+});
+
+function boom(el){
+  const r = el.getBoundingClientRect();
+  const s = document.createElement('span');
+  s.className = 'boom';
+  s.style.left = (r.left + r.width/2 - 6) + 'px';
+  s.style.top  = (r.top + r.height/2 - 6) + 'px';
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 500);
+  sfx('pop');
+}
+
+document.getElementById('days').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]');
+  if(!b || !canEdit) return;
+  const d = state.days.filter(x => x.id === b.dataset.day)[0];
+  if(!d) return;
+  const act = b.dataset.act;
+  if(act === 'inc'){
+    d.wins[b.dataset.p] = (d.wins[b.dataset.p] || 0) + 1;
+    boom(b);
+    save();
+  } else if(act === 'dec'){
+    d.wins[b.dataset.p] = Math.max(0, (d.wins[b.dataset.p] || 0) - 1);
+    save();
+  } else if(act === 'del'){
+    if(confirm('Borrar la jornada del ' + fmt(d.date) + '?')){
+      state.days = state.days.filter(x => x.id !== d.id);
+      save();
+    }
+  } else if(act === 'edit'){
+    openDialog(d);
+  }
+});
+
+const dlg = document.getElementById('dlg');
+function openDialog(day){
+  editing = day || null;
+  document.getElementById('dlgTitle').textContent = day ? 'EDITAR JORNADA' : 'NUEVA JORNADA';
+  document.getElementById('fDate').value = day ? day.date : new Date().toISOString().slice(0,10);
+  document.getElementById('fErr').hidden = true;
+  document.getElementById('fPlayers').innerHTML = PLAYERS.map(p =>
+    '<label style="color:' + p.color + '"><input type="checkbox" value="' + p.id + '"' +
+    ((!day || day.players.indexOf(p.id) > -1) ? ' checked' : '') + '>' + p.name + '</label>'
+  ).join('');
+  dlg.showModal();
+}
+document.getElementById('newDay').addEventListener('click', () => { if(canEdit) openDialog(null); });
+
+document.getElementById('fSave').addEventListener('click', () => {
+  const date = document.getElementById('fDate').value;
+  const sel = Array.prototype.slice.call(document.querySelectorAll('#fPlayers input:checked')).map(i => i.value);
+  const err = document.getElementById('fErr');
+  if(!date){ err.textContent = 'PON UNA FECHA'; err.hidden = false; return; }
+  if(!sel.length){ err.textContent = 'ELIGE AL MENOS UN JUGADOR'; err.hidden = false; return; }
+  const choque = state.days.filter(d => d.date === date && (!editing || d.id !== editing.id))[0];
+  if(choque){ err.textContent = 'YA EXISTE UNA JORNADA ESE DIA'; err.hidden = false; return; }
+
+  if(editing){
+    const w = {};
+    sel.forEach(p => w[p] = editing.wins[p] || 0);
+    editing.date = date;
+    editing.players = sel;
+    editing.wins = w;
+  } else {
+    const w = {};
+    sel.forEach(p => w[p] = 0);
+    state.days.push({ id:'d' + Date.now(), date:date, players:sel, wins:w });
+  }
+  editing = null;
+  dlg.close();
+  save();
+});
+dlg.addEventListener('close', () => { editing = null; });
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], {type:'application/json'}));
+  a.download = 'bomber-nueva-era.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const d = JSON.parse(r.result);
+      if(!d || !Array.isArray(d.days)) throw new Error('mal');
+      state = d;
+      save();
+    }catch(err){
+      alert('Ese archivo no sirve');
+    }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+});
+
+render();
+
+/* ============ SONIDO ============ */
+let AC = null;
+function ac(){
+  if(AC) return AC;
+  try{ AC = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
+  return AC;
+}
+function tone(freq, dur, type, vol, slide){
+  const c = ac();
+  if(!c || c.state !== 'running') return;
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type || 'square';
+  o.frequency.setValueAtTime(freq, c.currentTime);
+  if(slide) o.frequency.exponentialRampToValueAtTime(slide, c.currentTime + dur);
+  g.gain.setValueAtTime(vol || .08, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(.0001, c.currentTime + dur);
+  o.connect(g).connect(c.destination);
+  o.start(); o.stop(c.currentTime + dur);
+}
+function sfx(kind){
+  const c = ac();
+  if(!c || c.state !== 'running') return;
+  if(kind === 'tick'){ tone(1200, .07, 'square', .05); }
+  else if(kind === 'pop'){ tone(520, .12, 'triangle', .09, 1300); }
+  else if(kind === 'thud'){ tone(140, .18, 'sine', .16, 50); }
+  else if(kind === 'boom'){
+    tone(90, .7, 'sawtooth', .22, 28);
+    const len = Math.floor(c.sampleRate * .55);
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2.2);
+    const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    s.buffer = buf; f.type = 'lowpass';
+    f.frequency.setValueAtTime(2400, c.currentTime);
+    f.frequency.exponentialRampToValueAtTime(160, c.currentTime + .55);
+    g.gain.setValueAtTime(.35, c.currentTime);
+    s.connect(f).connect(g).connect(c.destination);
+    s.start();
+  }
+  else if(kind === 'ready'){
+    [523,659,784,1046].forEach((f,i) => setTimeout(() => tone(f, .16, 'square', .07), i*90));
+  }
+}
+document.addEventListener('pointerdown', () => {
+  const c = ac();
+  if(c && c.state === 'suspended') c.resume();
+});
+
+/* ============ INTRO ============ */
+(function intro(){
+  const box = document.getElementById('intro');
+  const grid = document.getElementById('igrid');
+  const bomb = document.getElementById('ibomb');
+  const timers = [];
+  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+
+  function end(){
+    timers.forEach(clearTimeout);
+    box.classList.add('out');
+    document.body.classList.remove('locked','shake');
+    setTimeout(() => box.remove(), 600);
+  }
+  document.getElementById('skip').addEventListener('click', end);
+  document.addEventListener('keydown', function esc(e){
+    if(!document.getElementById('intro')) return;
+    if(e.key === 'Escape' || e.key === ' ' || e.key === 'Enter'){ end(); }
+  });
+
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){ end(); return; }
+
+  // tablero de bloques
+  const cell = window.innerWidth < 560 ? 44 : 60;
+  const cols = Math.ceil(window.innerWidth / cell) + 1;
+  const rows = Math.ceil(window.innerHeight / cell) + 1;
+  grid.style.gridTemplateColumns = 'repeat(' + cols + ',' + cell + 'px)';
+  grid.style.gridAutoRows = cell + 'px';
+  const blocks = [];
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const b = document.createElement('div');
+      b.className = 'blk' + ((r%2===1 && c%2===1) ? ' hard' : '');
+      b.style.animationDelay = ((r+c) * 16) + 'ms';
+      grid.appendChild(b);
+      blocks.push(b);
+    }
+  }
+
+  // linea de tiempo
+  at(500,  () => { bomb.classList.add('drop'); });
+  at(950,  () => { sfx('thud'); bomb.classList.add('tick'); });
+
+  const cd = document.getElementById('cd');
+  [3,2,1].forEach((n,i) => {
+    at(1100 + i*320, () => {
+      cd.textContent = n;
+      cd.classList.remove('on');
+      void cd.offsetWidth;
+      cd.classList.add('on');
+      sfx('tick');
+    });
+  });
+
+  at(2060, () => {
+    sfx('boom');
+    bomb.classList.add('gone');
+    document.getElementById('blast').classList.add('go');
+    document.getElementById('flash').classList.add('on');
+    document.body.classList.add('shake');
+    blocks.forEach(b => {
+      b.style.setProperty('--bx', (Math.random()*220 - 110) + 'vw');
+      b.style.setProperty('--by', (Math.random()*180 - 130) + 'vh');
+      b.style.setProperty('--br', (Math.random()*720 - 360) + 'deg');
+      b.classList.add('blown');
+    });
+  });
+
+  at(2500, () => { document.getElementById('blast').classList.add('fade'); });
+
+  at(2560, () => {
+    document.body.classList.remove('shake');
+    document.getElementById('ititle').classList.add('on');
+  });
+
+  const ipl = document.getElementById('iplayers');
+  ipl.innerHTML = PLAYERS.map(p =>
+    '<span class="ip"><span class="sq" style="background:' + p.color + '"></span>' +
+    '<span style="color:' + p.color + '">' + p.name + '</span></span>'
+  ).join('');
+  const chips = ipl.querySelectorAll('.ip');
+  chips.forEach((ch,i) => at(2950 + i*170, () => { ch.classList.add('on'); sfx('pop'); }));
+
+  at(2950 + chips.length*170 + 200, () => {
+    document.getElementById('iready').classList.add('on');
+    sfx('ready');
+  });
+  at(2950 + chips.length*170 + 1500, end);
+})();
+
+/* ============ NUBE (Firebase Realtime) ============ */
+/* Para que el marcador se comparta entre todos hacen falta 2 cosas en la consola de Firebase:
+   1) pegar aqui abajo la Web API Key del proyecto bomber-3a196
+   2) las reglas de la base (estan en el README) */
+const API_KEY = '';
+const ADMIN   = 'jarb2299@gmail.com';
+
+(async function cloud(){
+  const CDN = 'https://www.gstatic.com/firebasejs/10.12.0/';
+  const DB_URL = 'https://bomber-3a196-default-rtdb.firebaseio.com';
+  const PATH = 'nuevaEra';
+  try{
+    const appMod = await import(CDN + 'firebase-app.js');
+    const dbMod  = await import(CDN + 'firebase-database.js');
+    const cfg = { databaseURL: DB_URL };
+    if(API_KEY){
+      cfg.apiKey     = API_KEY;
+      cfg.authDomain = 'bomber-3a196.firebaseapp.com';
+      cfg.projectId  = 'bomber-3a196';
+    }
+    const app = appMod.initializeApp(cfg);
+    const db = dbMod.getDatabase(app);
+    const R  = dbMod.ref(db, PATH);
+
+    // sin API key no hay login posible: se edita local y punto
+    if(!API_KEY){
+      setEdit(true);
+    } else {
+      const authMod = await import(CDN + 'firebase-auth.js');
+      const auth = authMod.getAuth(app);
+      const btn = document.getElementById('authBtn');
+      btn.hidden = false;
+      authMod.onAuthStateChanged(auth, u => {
+        setEdit(!!u && u.email === ADMIN);
+        btn.textContent = u ? ('SALIR &middot; ' + u.email.split('@')[0]).replace('&middot;','·') : 'ENTRAR PARA EDITAR';
+        if(u && u.email !== ADMIN) setLive(true, 'SOLO MIRANDO &middot; EDITA ' + ADMIN.split('@')[0].toUpperCase());
+      });
+      btn.addEventListener('click', () => {
+        if(auth.currentUser) authMod.signOut(auth);
+        else authMod.signInWithPopup(auth, new authMod.GoogleAuthProvider()).catch(e => alert('No se pudo entrar: ' + e.code));
+      });
+    }
+
+    cloudSet = data => dbMod.set(R, data);
+
+    dbMod.onValue(R, snap => {
+      const v = snap.val();
+      if(!v || !Array.isArray(v.days)){
+        setLive(true, 'EN VIVO &middot; SUBIENDO MARCADOR');
+        cloudSet(state).then(() => setLive(true, 'EN VIVO &middot; TODOS VEN LO MISMO'));
+        return;
+      }
+      applyingRemote = true;
+      state = v;
+      try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+      render();
+      applyingRemote = false;
+      setLive(true, 'EN VIVO &middot; TODOS VEN LO MISMO');
+    }, err => {
+      cloudSet = null;
+      setLive(false, 'SOLO EN ESTE EQUIPO (' + (err && err.code ? err.code : 'sin acceso') + ')');
+    });
+  }catch(e){
+    cloudSet = null;
+    setLive(false, 'SOLO EN ESTE EQUIPO (SIN CONEXION)');
+  }
+})();
+</script>
+</body>
+</html>
