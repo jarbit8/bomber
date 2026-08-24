@@ -97,8 +97,10 @@ h1 .era{display:block;font-size:.52em;color:#fff;text-shadow:3px 3px 0 #2a53a8,5
 
 .gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:22px}
 .gs{padding:14px;text-align:center}
-.gs b{display:block;font-size:17px;color:var(--fire);margin-bottom:8px}
+.gs b{display:block;font-size:17px;color:var(--fire);margin-bottom:8px;line-height:1.4}
 .gs span{font-size:7px;color:var(--dim);line-height:1.8}
+.gs.has-who b{margin-bottom:3px}
+.gs em{display:block;font-style:normal;font-size:9px;color:var(--fire2);margin-bottom:9px;line-height:1.6;word-break:break-word}
 
 /* dias */
 .bar-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
@@ -146,6 +148,11 @@ h1 .era{display:block;font-size:.52em;color:#fff;text-shadow:3px 3px 0 #2a53a8,5
 .mrow .mpts{font-size:12px;color:var(--fire2)}
 .mbar{height:7px;background:#14141f;border:2px solid var(--line);margin-top:8px;overflow:hidden}
 .mbar i{display:block;height:100%}
+
+/* sub-division por mes dentro de cada tabla de grupo */
+.gmonth{margin-top:16px;padding-top:16px;border-top:3px solid var(--line)}
+.gmonth:first-child{margin-top:14px;padding-top:0;border-top:none}
+.gmonth-h{font-size:8px;color:var(--fire2);margin-bottom:10px;letter-spacing:1px;line-height:1.8}
 
 /* dialogo */
 dialog{border:none;background:transparent;padding:0;color:var(--text)}
@@ -299,7 +306,7 @@ body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:
   <div class="cd" id="cd"></div>
   <div class="ititle" id="ititle">
     <div class="l1">BOMBER</div>
-    <div class="l2">LA NUEVA ERA</div>
+    <div class="l2">NEW ERA</div>
     <div class="iplayers" id="iplayers"></div>
     <div class="iready" id="iready">EL MARCADOR ESTA LISTO</div>
   </div>
@@ -310,7 +317,7 @@ body.readonly .hint::after{content:' \A SOLO JARB2299 PUEDE EDITAR';white-space:
 <div class="wrap">
 
   <header>
-    <h1><span class="bomb">&#128163;</span> BOMBER <span class="era">LA NUEVA ERA</span></h1>
+    <h1><span class="bomb">&#128163;</span> BOMBER <span class="era">NEW ERA</span></h1>
     <p class="tagline">MARCADOR OFICIAL &middot; 1 PARTIDA GANADA = 1 PUNTO</p>
   </header>
 
@@ -585,18 +592,24 @@ function renderGlobal(){
   const empatados = rows.filter(r => r.pts === top && top > 0);
   const lider = top === 0 ? '-' : (empatados.length > 1 ? 'EMPATE' : empatados[0].name);
   const bs = globalBestStreak();
-  const rachaTxt = bs.len >= 2
-    ? (bs.len + 'x &middot; ' + bs.holders.map(h => { const p = pById(h); return p ? p.name : h; }).join(', '))
-    : '-';
   document.getElementById('gstats').innerHTML =
     stat(partidas, 'PARTIDAS JUGADAS') +
     stat(state.days.length, 'JORNADAS') +
     stat(lider, 'AL MANDO') +
     stat(top + ' PTS', 'PUNTAJE MAS ALTO') +
-    stat(rachaTxt, 'RACHA MAS LARGA');
+    statStreak(bs);
 }
 function stat(v, l){
   return '<div class="gs pix"><b>' + v + '</b><span>' + l + '</span></div>';
+}
+/* la de racha se ve mejor con el numero grande arriba y el nombre debajo,
+   en vez de todo apretado en una sola linea */
+function statStreak(bs){
+  if(bs.len < 2){
+    return '<div class="gs pix"><b>&#128293; -</b><span>RACHA MAS LARGA</span></div>';
+  }
+  const who = bs.holders.map(h => { const p = pById(h); return p ? p.name : h; }).join(' &middot; ');
+  return '<div class="gs pix has-who"><b>&#128293; ' + bs.len + 'x</b><em>' + who + '</em><span>RACHA MAS LARGA</span></div>';
 }
 
 function renderDays(){
@@ -644,11 +657,12 @@ function dayCardHTML(d){
   const acts = [];
   if(editable){
     acts.push('<button class="mini" data-act="undo" data-day="' + d.id + '"' + (tot ? '' : ' disabled') + '>&#8617; DESHACER</button>');
-    acts.push('<button class="mini" data-act="edit" data-day="' + d.id + '">EDITAR</button>');
     acts.push('<button class="mini close" data-act="close" data-day="' + d.id + '">CERRAR JORNADA</button>');
   }
   if(canEdit){
-    acts.push('<button class="mini del" data-act="del" data-day="' + d.id + '">BORRAR</button>');
+    // la fecha y quienes jugaron se pueden corregir aunque este cerrada;
+    // lo unico que queda bloqueado al cerrar son los puntos (GANO/DESHACER)
+    acts.push('<button class="mini" data-act="edit" data-day="' + d.id + '">EDITAR</button>');
   }
 
   const badge = d.closed ? '<span class="closed-badge">&#128274; CERRADA</span>' : '';
@@ -729,12 +743,28 @@ function renderMonths(){
 function groupKey(players){
   return players.slice().sort().join('|');
 }
+/* arma la fila de ranking chiquita que se reusa en POR MES y dentro de cada
+   sub-mes de POR GRUPO */
+function rankRowsHTML(rows){
+  const maxPts = Math.max(1, rows[0] ? rows[0].pts : 1);
+  return rows.map((r,i) => {
+    const pct = Math.round(r.pts / maxPts * 100);
+    return '<div class="mrow"><div class="top">' +
+      '<span class="mpos">' + (i+1) + '</span>' +
+      '<span class="av" style="background:' + r.color + '"></span>' +
+      '<span class="mn" style="color:' + r.color + '">' + r.name + '</span>' +
+      '<span class="mpts">' + r.pts + '</span>' +
+    '</div><div class="mbar"><i style="width:' + pct + '%;background:' + r.color + '"></i></div></div>';
+  }).join('');
+}
+
 function renderGroups(){
   const box = document.getElementById('groups');
   if(!state.days.length){
     box.innerHTML = '<div class="empty pix">TODAVIA NO HAY JORNADAS</div>';
     return;
   }
+  const hoyKey = new Date().toISOString().slice(0,7);
   const byGroup = {};
   state.days.forEach(d => {
     const k = groupKey(d.players);
@@ -748,41 +778,50 @@ function renderGroups(){
 
   box.innerHTML = groups.map(g => {
     const dds = g.days;
-    const t = {};
-    g.players.forEach(p => t[p] = { pts:0, jugadas:0 });
+    // los del grupo, en el orden natural del roster + invitados
+    const order = allPlayers().map(p => p.id).filter(id => g.players.indexOf(id) > -1);
+    const groupLabel = order.map(id => { const p = pById(id); return p ? p.name : id; }).join(' + ');
+
     let partidas = 0, bestLen = 0, bestHolders = [];
     dds.forEach(d => {
-      const w = orderToWins(d.order);
-      const tot = dayTotal(d);
-      partidas += tot;
-      d.players.forEach(p => { if(t[p]){ t[p].pts += w[p] || 0; t[p].jugadas += tot; } });
+      partidas += dayTotal(d);
       const r = longestStreak(d.order);
       if(r.len > bestLen){ bestLen = r.len; bestHolders = r.holders; }
     });
-    // los del grupo, en el orden natural del roster + invitados
-    const order = allPlayers().map(p => p.id).filter(id => g.players.indexOf(id) > -1);
-    const rows = order.map(id => Object.assign({}, pById(id), t[id]))
-      .sort((a,b) => b.pts - a.pts || a.name.localeCompare(b.name));
-    const maxPts = Math.max(1, rows[0] ? rows[0].pts : 1);
-    const filas = rows.map((r,i) => {
-      const pct = Math.round(r.pts / maxPts * 100);
-      return '<div class="mrow"><div class="top">' +
-        '<span class="mpos">' + (i+1) + '</span>' +
-        '<span class="av" style="background:' + r.color + '"></span>' +
-        '<span class="mn" style="color:' + r.color + '">' + r.name + '</span>' +
-        '<span class="mpts">' + r.pts + '</span>' +
-      '</div><div class="mbar"><i style="width:' + pct + '%;background:' + r.color + '"></i></div></div>';
-    }).join('');
     const rachaTxt = bestLen >= 2
       ? (bestLen + 'x &middot; ' + bestHolders.map(h => { const p = pById(h); return p ? p.name : h; }).join(', '))
       : '-';
-    const groupLabel = order.map(id => { const p = pById(id); return p ? p.name : id; }).join(' + ');
+
+    // dentro del grupo, se separa por mes: si el mismo grupo juega en meses
+    // distintos, cada mes tiene su propia mini-tabla
+    const byMonth = {};
+    dds.forEach(d => (byMonth[monthKey(d.date)] = byMonth[monthKey(d.date)] || []).push(d));
+    const monthsHTML = Object.keys(byMonth).sort().reverse().map(mk => {
+      const mdds = byMonth[mk];
+      const t = {};
+      order.forEach(id => t[id] = { pts:0, jugadas:0 });
+      let mpartidas = 0;
+      mdds.forEach(d => {
+        const w = orderToWins(d.order);
+        const tot = dayTotal(d);
+        mpartidas += tot;
+        d.players.forEach(p => { if(t[p]){ t[p].pts += w[p] || 0; t[p].jugadas += tot; } });
+      });
+      const rows = order.map(id => Object.assign({}, pById(id), t[id]))
+        .sort((a,b) => b.pts - a.pts || a.name.localeCompare(b.name));
+      const actualBadge = (mk === hoyKey) ? '<span class="closed-badge">&#9203; MES ACTUAL</span>' : '';
+      return '<div class="gmonth">' +
+        '<div class="gmonth-h">' + monthLabel(mk) + actualBadge + '<br>' + mdds.length + ' JORNADAS &middot; ' + mpartidas + ' PARTIDAS</div>' +
+        '<div class="mlist">' + rankRowsHTML(rows) + '</div>' +
+      '</div>';
+    }).join('');
+
     return '<div class="day pix">' +
       '<div class="day-h"><div>' +
         '<div class="day-d">' + groupLabel + '</div>' +
-        '<div class="day-s">' + dds.length + ' JORNADAS &middot; ' + partidas + ' PARTIDAS &middot; RACHA: ' + rachaTxt + '</div>' +
+        '<div class="day-s">' + dds.length + ' JORNADAS EN TOTAL &middot; ' + partidas + ' PARTIDAS &middot; RACHA: ' + rachaTxt + '</div>' +
       '</div></div>' +
-      '<div class="mlist">' + filas + '</div>' +
+      monthsHTML +
     '</div>';
   }).join('');
 }
@@ -840,13 +879,8 @@ document.getElementById('days').addEventListener('click', e => {
       d.closed = true;
       save();
     }
-  } else if(act === 'del'){
-    if(confirm('Borrar la jornada del ' + fmt(d.date) + '?')){
-      state.days = state.days.filter(x => x.id !== d.id);
-      save();
-    }
   } else if(act === 'edit'){
-    if(!editable) return;
+    if(!canEdit) return;
     openDialog(d);
   }
 });
@@ -892,7 +926,6 @@ document.getElementById('fOtroAdd').addEventListener('click', () => {
 });
 
 document.getElementById('fSave').addEventListener('click', () => {
-  if(editing && editing.closed) return; // no se toca una jornada cerrada
   const date = document.getElementById('fDate').value;
   const sel = Array.prototype.slice.call(document.querySelectorAll('#fPlayers input:checked')).map(i => i.value);
   const err = document.getElementById('fErr');
@@ -900,6 +933,17 @@ document.getElementById('fSave').addEventListener('click', () => {
   if(!sel.length){ err.textContent = 'ELIGE AL MENOS UN JUGADOR'; err.hidden = false; return; }
   const choque = state.days.filter(d => d.date === date && (!editing || d.id !== editing.id))[0];
   if(choque){ err.textContent = 'YA EXISTE UNA JORNADA ESE DIA'; err.hidden = false; return; }
+  if(editing && editing.closed){
+    // en una cerrada se puede corregir fecha o sumar a alguien que se te paso,
+    // pero no quitar a quien ya tiene partidas ganadas ahi
+    const w = orderToWins(editing.order);
+    const perdidos = Object.keys(w).filter(pid => w[pid] > 0 && sel.indexOf(pid) === -1);
+    if(perdidos.length){
+      err.textContent = 'NO PUEDES QUITAR A QUIEN YA TIENE PARTIDAS GANADAS EN UNA JORNADA CERRADA';
+      err.hidden = false;
+      return;
+    }
+  }
 
   // recien ahora quedan confirmados los invitados nuevos que se marcaron
   pendingGuests.forEach(g => {
