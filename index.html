@@ -270,8 +270,12 @@ body.shake{animation:shake .5s steps(2,end) 2}
   0%{box-shadow:0 0 0 0 var(--fire2);opacity:1}
   100%{box-shadow:0 0 0 46px rgba(255,138,31,0);opacity:0}
 }
-footer{text-align:center;margin-top:34px;font-size:7px;color:#55556e;line-height:2.6}
-.credit{margin-top:18px;font-size:7px;color:#3f3f56;letter-spacing:1px}
+footer{text-align:center;margin-top:34px}
+.foot-controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;opacity:.6}
+.credit{
+  margin-top:30px;font-family:var(--pix);font-size:11px;color:#5a5a78;letter-spacing:2px;
+}
+.credit span{color:var(--fire2);text-shadow:2px 2px 0 rgba(0,0,0,.5)}
 .live{display:inline-flex;align-items:center;gap:7px;font-size:7px;color:var(--dim);border:3px solid var(--line);background:var(--panel2);padding:8px 11px}
 .live i{width:8px;height:8px;border-radius:50%;background:#77778f}
 .live.on{color:#4dd97a}
@@ -319,7 +323,6 @@ body.readonly .hint::after{content:' \A SOLO JARBIT PUEDE EDITAR';white-space:pr
 
   <header>
     <h1><span class="bomb">&#128163;</span> BOMBER <span class="era">NEW ERA</span></h1>
-    <p class="tagline">MARCADOR OFICIAL &middot; 1 PARTIDA GANADA = 1 PUNTO</p>
   </header>
 
   <nav class="tabs">
@@ -353,13 +356,14 @@ body.readonly .hint::after{content:' \A SOLO JARBIT PUEDE EDITAR';white-space:pr
   </section>
 
   <footer>
-    <span class="live" id="live"><i></i>CONECTANDO...</span>
-    <button class="mini" id="authBtn" hidden>ENTRAR PARA EDITAR</button><br>
-    SERGIO &middot; JOEL &middot; GONZALO &middot; PARCE &middot; GALLO<br>
-    <button class="mini" id="exportBtn">EXPORTAR</button>
-    <button class="mini" id="importBtn">IMPORTAR</button>
-    <input type="file" id="importFile" accept="application/json" hidden>
-    <div class="credit">Powered by Jarbit</div>
+    <span class="live" id="live" style="display:none"><i></i>CONECTANDO...</span>
+    <div class="foot-controls">
+      <button class="mini" id="authBtn" hidden>ENTRAR PARA EDITAR</button>
+      <button class="mini" id="exportBtn">EXPORTAR</button>
+      <button class="mini" id="importBtn">IMPORTAR</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+    <div class="credit">POWERED BY <span>JARBIT</span></div>
   </footer>
 </div>
 
