@@ -357,7 +357,6 @@ body.readonly #importBtn{display:none}
     <span class="live" id="live" style="display:none"><i></i>CONECTANDO...</span>
     <div class="foot-controls">
       <button class="mini" id="authBtn" hidden>ENTRAR PARA EDITAR</button>
-      <button class="mini" id="exportBtn">EXPORTAR</button>
       <button class="mini" id="importBtn">IMPORTAR</button>
       <input type="file" id="importFile" accept="application/json" hidden>
     </div>
@@ -971,13 +970,6 @@ document.getElementById('fSave').addEventListener('click', () => {
 });
 dlg.addEventListener('close', () => { editing = null; pendingGuests = []; });
 
-document.getElementById('exportBtn').addEventListener('click', () => {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], {type:'application/json'}));
-  a.download = 'bomber-nueva-era.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-});
 document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
 document.getElementById('importFile').addEventListener('change', e => {
   const f = e.target.files[0];
