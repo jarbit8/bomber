@@ -271,7 +271,12 @@ body.shake{animation:shake .5s steps(2,end) 2}
   100%{box-shadow:0 0 0 46px rgba(255,138,31,0);opacity:0}
 }
 footer{text-align:center;margin-top:34px}
-.foot-controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;opacity:.6}
+.foot-controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;opacity:.6;align-items:center}
+.pinbox{display:flex;gap:8px}
+.pinbox input{
+  font-family:var(--pix);font-size:11px;letter-spacing:4px;width:76px;text-align:center;padding:9px 8px;
+  background:#1c1c2e;color:var(--text);border:3px solid var(--line);
+}
 .credit{
   margin-top:30px;font-family:var(--pix);font-size:11px;color:#5a5a78;letter-spacing:2px;
 }
@@ -355,7 +360,11 @@ body.readonly #importBtn{display:none}
   <footer>
     <span class="live" id="live" style="display:none"><i></i>CONECTANDO...</span>
     <div class="foot-controls">
-      <button class="mini" id="authBtn" hidden>ENTRAR PARA EDITAR</button>
+      <div class="pinbox" id="pinBox" hidden>
+        <input type="password" id="pinInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="PIN">
+        <button class="mini" id="pinBtn">ENTRAR</button>
+      </div>
+      <button class="mini" id="logoutBtn" hidden>SALIR</button>
       <button class="mini" id="importBtn">IMPORTAR</button>
       <input type="file" id="importFile" accept="application/json" hidden>
     </div>
@@ -1134,8 +1143,11 @@ document.addEventListener('pointerdown', () => {
    1) pegar aqui abajo la Web API Key del proyecto bomber-3a196
    2) las reglas de la base (estan en el README) */
 const API_KEY   = 'AIzaSyCY4vEhhXHC9mNtxX0LjalqygAKyXLWDKA';
-const ADMIN      = 'jarb2299@gmail.com';
-const ADMIN_NAME = 'JARBIT'; // nombre que se muestra en vez del correo
+/* login por PIN: en vez de una cuenta de Google, es una unica cuenta de
+   Firebase (email+contrasena) creada a mano en la consola, donde la
+   "contrasena" es el PIN. Asi desde cualquier compu solo se escribe el PIN. */
+const PIN_EMAIL  = 'pin@bomber-nueva-era.local';
+const ADMIN_NAME = 'JARBIT'; // nombre que se muestra al estar logueado
 
 (async function cloud(){
   const CDN = 'https://www.gstatic.com/firebasejs/10.12.0/';
@@ -1161,19 +1173,33 @@ const ADMIN_NAME = 'JARBIT'; // nombre que se muestra en vez del correo
       setEdit(false); // hasta que Firebase confirme quien es, nadie edita
       const authMod = await import(CDN + 'firebase-auth.js');
       const auth = authMod.getAuth(app);
-      const btn = document.getElementById('authBtn');
-      btn.hidden = false;
+      const pinBox   = document.getElementById('pinBox');
+      const pinInput = document.getElementById('pinInput');
+      const pinBtn   = document.getElementById('pinBtn');
+      const logoutBtn = document.getElementById('logoutBtn');
+      pinBox.hidden = false; // se ve desde ya; onAuthStateChanged lo ajusta apenas resuelva
+
       authMod.onAuthStateChanged(auth, u => {
-        setEdit(!!u && u.email === ADMIN);
-        const quien = u ? (u.email === ADMIN ? ADMIN_NAME : u.email.split('@')[0]) : '';
-        btn.textContent = u ? ('SALIR · ' + quien) : 'ENTRAR PARA EDITAR';
-        if(u && u.email !== ADMIN) setLive(true, 'SOLO MIRANDO &middot; EDITA ' + ADMIN_NAME);
+        setEdit(!!u); // solo existe una cuenta (la del PIN), asi que si entro, es admin
+        pinBox.hidden = !!u;
+        logoutBtn.hidden = !u;
+        if(u){
+          pinInput.value = '';
+          logoutBtn.textContent = 'SALIR · ' + ADMIN_NAME;
+        }
         maybeSeed();
       });
-      btn.addEventListener('click', () => {
-        if(auth.currentUser) authMod.signOut(auth);
-        else authMod.signInWithPopup(auth, new authMod.GoogleAuthProvider()).catch(e => alert('No se pudo entrar: ' + e.code));
+
+      pinBtn.addEventListener('click', () => {
+        const pin = pinInput.value.trim();
+        if(pin.length < 6){ alert('EL PIN TIENE QUE TENER AL MENOS 6 DIGITOS'); return; }
+        pinBtn.disabled = true;
+        authMod.signInWithEmailAndPassword(auth, PIN_EMAIL, pin)
+          .catch(() => alert('PIN INCORRECTO'))
+          .finally(() => { pinBtn.disabled = false; });
       });
+      pinInput.addEventListener('keydown', e => { if(e.key === 'Enter') pinBtn.click(); });
+      logoutBtn.addEventListener('click', () => authMod.signOut(auth));
     }
 
     cloudSet = data => dbMod.set(R, data);
@@ -1208,10 +1234,12 @@ const ADMIN_NAME = 'JARBIT'; // nombre que se muestra en vez del correo
       setLive(true, 'EN VIVO &middot; TODOS VEN LO MISMO');
     }, err => {
       cloudSet = null;
+      setEdit(true); // sin nube no hay como saber quien es admin: que al menos edite local
       setLive(false, 'SOLO EN ESTE EQUIPO (' + (err && err.code ? err.code : 'sin acceso') + ')');
     });
   }catch(e){
     cloudSet = null;
+    setEdit(true); // firebase no cargo (sin internet, bloqueado, etc): que no quede bloqueado
     setLive(false, 'SOLO EN ESTE EQUIPO (SIN CONEXION)');
   }
 })();

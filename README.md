@@ -26,22 +26,32 @@ Pegarla en `index.html`, en la linea:
 const API_KEY = '';
 ```
 
-**2. Las reglas.** Realtime Database -> Reglas:
+**2. El login por PIN.** En vez de una cuenta de Google, es una sola cuenta de
+Firebase (correo + contrasena) donde la "contrasena" es el PIN. Asi desde
+cualquier compu solo se escribe el PIN, sin iniciar sesion con nada.
+
+En Authentication -> Sign-in method: activar el proveedor **Email/Password**.
+
+En Authentication -> Users -> "Add user":
+- Correo: `pin@bomber-nueva-era.local` (tiene que ser EXACTO, asi lo busca el codigo)
+- Contrasena: el PIN elegido (minimo 6 caracteres, puede ser solo numeros)
+
+**3. Las reglas.** Realtime Database -> Reglas:
 
 ```json
 {
   "rules": {
     "nuevaEra": {
       ".read": true,
-      ".write": "auth != null && auth.token.email === 'jarb2299@gmail.com'"
+      ".write": "auth != null && auth.token.email === 'pin@bomber-nueva-era.local'"
     }
   }
 }
 ```
 
-Asi cualquiera puede mirar el marcador, pero solo jarb2299@gmail.com puede
-anotar puntos (entrando con el boton "ENTRAR PARA EDITAR").
+Asi cualquiera puede mirar el marcador, pero solo quien sepa el PIN puede
+anotar puntos (metiendolo en la cajita de abajo del todo).
 
-Ademas, en Authentication:
-- Activar el proveedor **Google**.
-- En "Dominios autorizados" agregar `jarbit8.github.io`.
+Para cambiar el PIN mas adelante: Authentication -> Users -> los tres puntos
+del usuario `pin@bomber-nueva-era.local` -> "Reset password", o borrarlo y
+crearlo de nuevo con otra contrasena.
