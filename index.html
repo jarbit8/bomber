@@ -79,7 +79,7 @@ h1 .era{display:block;font-size:.52em;color:#fff;text-shadow:3px 3px 0 #2a53a8,5
 .pod .nm{font-size:11px;margin-bottom:8px;word-break:break-word}
 .pod .pts{font-size:18px;color:var(--fire2)}
 .pod .lbl{font-size:7px;color:var(--dim);margin-top:6px}
-.pod.p1{padding-top:26px;padding-bottom:26px}
+.pod.p1{padding-top:26px;padding-bottom:26px;border-color:#7a5c00;background:linear-gradient(180deg,#3d2e12 0%,var(--panel) 70%);box-shadow:inset -4px -4px 0 rgba(0,0,0,.35), inset 4px 4px 0 rgba(255,210,63,.14), 6px 6px 0 rgba(0,0,0,.45), 0 0 22px rgba(255,210,63,.16)}
 .pod.p2{padding-top:16px}
 .pod.p3{padding-top:10px}
 
@@ -102,30 +102,61 @@ h1 .era{display:block;font-size:.52em;color:#fff;text-shadow:3px 3px 0 #2a53a8,5
 .gs.has-who b{margin-bottom:3px}
 .gs em{display:block;font-style:normal;font-size:9px;color:var(--fire2);margin-bottom:9px;line-height:1.6;word-break:break-word}
 
-/* temporadas */
-.season-h{padding:18px 14px;margin-bottom:24px;text-align:center}
-.season-h .st{font-size:clamp(11px,3.2vw,15px);color:var(--fire2);letter-spacing:2px;line-height:1.7;text-shadow:3px 3px 0 #b32d00}
-.season-h .ss{font-size:8px;color:var(--dim);margin-top:13px;line-height:1.9}
-.season-h .sb{display:inline-block;font-size:7px;color:#ffb347;background:#3a1f00;border:2px solid #5a3000;padding:5px 8px;margin-top:14px;line-height:1.7}
+/* temporadas: cabecera del global */
+.season-h{position:relative;padding:24px 16px 20px;margin-bottom:26px;text-align:center;overflow:hidden}
+.season-h::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% -10%,rgba(255,138,31,.22),transparent 65%);pointer-events:none}
+.season-h > *{position:relative}
+.season-h .st{font-size:clamp(13px,4vw,21px);color:var(--fire2);letter-spacing:2px;line-height:1.6;text-shadow:3px 3px 0 #b32d00,6px 6px 0 rgba(0,0,0,.5)}
+.season-h .rule{height:4px;margin:16px auto 0;max-width:280px;background:repeating-linear-gradient(90deg,var(--fire) 0 8px,transparent 8px 16px)}
+.season-h .ss{font-size:8px;color:var(--dim);margin-top:14px;line-height:1.9}
+.season-h .sb{display:inline-flex;align-items:center;gap:7px;font-size:7px;color:#ffb347;background:#3a1f00;border:3px solid #5a3000;padding:7px 10px;margin-top:16px;line-height:1.7}
+.season-h .sb i{width:7px;height:7px;flex:none;background:var(--fire);animation:pulseDot 1.2s steps(2,end) infinite}
 
-.palmares{margin-top:36px;padding-top:28px;border-top:4px solid var(--line)}
-.palmares h2{font-size:12px;color:var(--fire2);letter-spacing:2px;margin:0 0 10px;text-align:center;text-shadow:2px 2px 0 rgba(0,0,0,.5)}
-.palmares .sub{font-size:7px;color:var(--dim);text-align:center;margin:0 0 20px;line-height:1.9}
+/* ---- salon de trofeos ---- */
+.palmares{margin-top:40px}
+.palmares .ph{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.palmares .ph i{flex:1;height:4px;background:repeating-linear-gradient(90deg,var(--fire2) 0 6px,transparent 6px 12px)}
+.palmares h2{font-size:clamp(10px,3vw,13px);color:var(--fire2);letter-spacing:2px;margin:0;text-align:center;white-space:nowrap;text-shadow:2px 2px 0 #b32d00,4px 4px 0 rgba(0,0,0,.5)}
+.palmares .sub{font-size:7px;color:var(--dim);text-align:center;margin:0 0 24px;line-height:1.9}
 
 /* vitrina: un casillero por jugador con sus super trofeos */
-.cabinet{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;margin-bottom:24px}
-.cab{padding:14px 8px;text-align:center}
-.cab .cup{font-size:22px;opacity:.16;filter:grayscale(1)}
-.cab.win .cup{opacity:1;filter:none;text-shadow:0 0 14px rgba(255,210,63,.55)}
-.cab .cn{font-size:9px;margin-top:9px;word-break:break-word}
-.cab .cc{font-size:15px;color:var(--dim);margin-top:8px}
+.cabinet{display:grid;grid-template-columns:repeat(auto-fit,minmax(124px,1fr));gap:12px;margin-bottom:28px}
+.cab{position:relative;padding:18px 8px 14px;text-align:center;overflow:hidden}
+.cab.win{background:linear-gradient(180deg,#3d2e12 0%,var(--panel) 62%)}
+/* brillo que barre la vitrina de los que si ganaron algo */
+.cab.win::after{content:'';position:absolute;top:-60%;left:-130%;width:55%;height:230%;transform:rotate(18deg);pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent);animation:sweep 4.2s steps(26,end) infinite}
+@keyframes sweep{0%{left:-130%}55%,100%{left:170%}}
+.cab .cup{display:block;font-size:30px;line-height:1;opacity:.13;filter:grayscale(1)}
+.cab.win .cup{opacity:1;filter:drop-shadow(0 0 9px rgba(255,210,63,.8));animation:cupFloat 1.8s steps(4,end) infinite}
+@keyframes cupFloat{50%{transform:translateY(-4px)}}
+/* la peana donde se apoya el trofeo */
+.cab .base{width:54px;height:8px;margin:10px auto 0;background:#3a3a55;border:3px solid var(--line)}
+.cab.win .base{background:var(--fire2);box-shadow:0 0 14px rgba(255,210,63,.5)}
+.cab .cn{font-size:9px;margin-top:12px;word-break:break-word}
+.cab .cups{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:10px;min-height:15px;font-size:13px;line-height:1}
+.cab .cups i{font-style:normal}
+.cab .cups em{font-style:normal;font-size:9px;color:var(--fire2);align-self:center}
+.cab .cc{font-size:7px;color:#6a6a86;margin-top:10px;line-height:1.7}
 .cab.win .cc{color:var(--fire2)}
+.cab .crown{position:absolute;top:6px;right:7px;font-size:13px;filter:drop-shadow(0 0 6px rgba(255,210,63,.7))}
 
-/* el trofeo de la temporada, bien a la vista */
-.champ{display:inline-flex;align-items:center;gap:7px;font-size:9px;color:#1a1000;background:var(--fire2);border:3px solid var(--line);padding:6px 9px;margin-left:10px;vertical-align:middle;box-shadow:3px 3px 0 rgba(0,0,0,.45)}
-.champ .cup{font-size:13px;animation:cupUp .9s steps(2,end) infinite}
+/* ---- tarjeta de cada temporada pasada ---- */
+.scard{margin-bottom:16px;overflow:hidden}
+.scard.won{border-color:#000;box-shadow:inset -4px -4px 0 rgba(0,0,0,.35), inset 4px 4px 0 rgba(255,210,63,.11), 6px 6px 0 rgba(0,0,0,.45), 0 0 20px rgba(255,210,63,.13)}
+.sc-h{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px}
+.sc-n{flex:none;width:58px;height:58px;display:flex;align-items:center;justify-content:center;font-size:21px;color:#12121f;border:4px solid var(--line);box-shadow:inset -4px -4px 0 rgba(0,0,0,.28), inset 4px 4px 0 rgba(255,255,255,.22)}
+.sc-t{flex:1;min-width:120px}
+.sc-t b{display:block;font-size:11px;color:var(--fire2);letter-spacing:1px;line-height:1.6}
+.sc-t span{display:block;font-size:7px;color:var(--dim);margin-top:9px;line-height:1.9}
+.sc-b{padding:0 14px 14px}
+.sc-b .mlist{padding-top:14px;border-top:4px solid var(--line)}
+
+/* la placa dorada del campeon */
+.champ{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:8px;font-size:10px;color:#1a1000;padding:9px 12px;border:3px solid var(--line);background:linear-gradient(180deg,#ffeb9c 0%,var(--fire2) 55%,#d99a00 100%);box-shadow:3px 3px 0 rgba(0,0,0,.5), inset 0 3px 0 rgba(255,255,255,.55)}
+.champ::after{content:'';position:absolute;top:-60%;left:-140%;width:42%;height:250%;transform:rotate(18deg);pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:sweep 4.2s steps(26,end) infinite}
+.champ .cup{font-size:14px;animation:cupUp .9s steps(2,end) infinite}
 @keyframes cupUp{50%{transform:translateY(-2px)}}
-.day.solo .day-h{border-bottom:none;padding-bottom:0;margin-bottom:0}
+.nochamp{display:inline-flex;align-items:center;font-size:8px;color:#8a8aa8;background:#1c1c2e;border:3px solid var(--line);padding:9px 12px}
 .tseason{display:inline-block;font-size:7px;color:var(--dim);background:#1c1c2e;border:2px solid var(--line);padding:3px 7px;margin-left:8px;vertical-align:middle}
 
 /* dias */
@@ -323,6 +354,8 @@ body.readonly #importBtn{display:none}
 @media(max-width:560px){
   .podium{grid-template-columns:1fr;align-items:stretch}
   .row{grid-template-columns:30px 1fr auto;gap:8px}
+  .sc-n{width:46px;height:46px;font-size:17px}
+  .champ,.nochamp{width:100%;justify-content:center}
   .pl{justify-content:space-between}
 }
 </style>
@@ -705,21 +738,35 @@ function renderGlobal(){
 function renderSeasonHead(n){
   const info = seasonInfo(n);
   document.getElementById('seasonHead').innerHTML =
-    '<div class="st">&#127942; GLOBAL &middot; TEMPORADA ' + n + '</div>' +
+    '<div class="st">&#127942; TEMPORADA ' + n + '</div>' +
+    '<div class="rule"></div>' +
     '<div class="ss">SEMESTRE ' + info.sem + ' &middot; ' + info.meses + ' ' + info.year + '</div>' +
-    '<div class="sb">&#9203; EN JUEGO &middot; EL 1RO SE LLEVA EL SUPER TROFEO</div>';
+    '<div class="sb"><i></i>EN JUEGO &middot; EL 1RO SE LLEVA EL SUPER TROFEO</div>';
 }
 /* vitrina de trofeos + las temporadas que ya se cerraron */
 function renderPalmares(cur){
   const tro = trophyCount();
   const gente = PLAYERS.concat((state.customPlayers || []).filter(p => tro[p.id]));
-  const cab = gente.map(p => Object.assign({}, p, { t:tro[p.id] || 0 }))
-    .sort((a,b) => b.t - a.t || a.name.localeCompare(b.name))
-    .map(r => '<div class="cab pix' + (r.t ? ' win' : '') + '">' +
-      '<div class="cup">&#127942;</div>' +
+  const vitrina = gente.map(p => Object.assign({}, p, { t:tro[p.id] || 0 }))
+    .sort((a,b) => b.t - a.t || a.name.localeCompare(b.name));
+  /* la corona va solo si hay UN lider claro en trofeos */
+  const maxT = vitrina[0] ? vitrina[0].t : 0;
+  const rey = (maxT > 0 && vitrina.filter(r => r.t === maxT).length === 1) ? vitrina[0].id : null;
+
+  const cab = vitrina.map(r => {
+    let cups = '';
+    for(let i = 0; i < Math.min(r.t, 8); i++) cups += '<i>&#127942;</i>';
+    if(r.t > 8) cups += '<em>x' + r.t + '</em>';
+    const pie = r.t === 0 ? 'SIN TROFEOS' : (r.t === 1 ? '1 TEMPORADA' : r.t + ' TEMPORADAS');
+    return '<div class="cab pix' + (r.t ? ' win' : '') + '">' +
+      (r.id === rey ? '<span class="crown">&#128081;</span>' : '') +
+      '<span class="cup">&#127942;</span>' +
+      '<div class="base"></div>' +
       '<div class="cn" style="color:' + r.color + '">' + r.name + '</div>' +
-      '<div class="cc">x' + r.t + '</div>' +
-    '</div>').join('');
+      '<div class="cups">' + cups + '</div>' +
+      '<div class="cc">' + pie + '</div>' +
+    '</div>';
+  }).join('');
 
   let cards = '';
   for(let n = cur - 1; n >= 1; n--){
@@ -728,22 +775,29 @@ function renderPalmares(cur){
     const p = c.pid ? pById(c.pid) : null;
     const champ = p
       ? '<span class="champ"><span class="cup">&#127942;</span>' + p.name + '</span>'
-      : '<span class="closed-badge">SIN CAMPEON</span>';
+      : '<span class="nochamp">SIN CAMPEON</span>';
     const jugadas = c.days.reduce((s,d) => s + dayTotal(d), 0);
     const detalle = c.days.length
       ? c.days.length + ' JORNADAS &middot; ' + jugadas + ' PARTIDAS'
       : 'SIN REGISTRO &middot; ANOTADA A MANO';
-    const lista = c.rows.length ? '<div class="mlist">' + rankRowsHTML(c.rows) + '</div>' : '';
-    cards += '<div class="day pix' + (lista ? '' : ' solo') + '">' +
-      '<div class="day-h"><div>' +
-        '<div class="day-d">TEMPORADA ' + n + champ + '</div>' +
-        '<div class="day-s">SEMESTRE ' + info.sem + ' &middot; ' + info.meses + ' ' + info.year + ' &middot; ' + detalle + '</div>' +
-      '</div></div>' + lista +
+    /* el numerote de la temporada se pinta del color del que la gano */
+    const numBg = p ? p.color : 'var(--panel2)';
+    const numFg = p ? '#12121f' : 'var(--dim)';
+    const lista = c.rows.length
+      ? '<div class="sc-b"><div class="mlist">' + rankRowsHTML(c.rows) + '</div></div>'
+      : '';
+    cards += '<div class="scard pix' + (p ? ' won' : '') + '">' +
+      '<div class="sc-h">' +
+        '<div class="sc-n" style="background:' + numBg + ';color:' + numFg + '">' + n + '</div>' +
+        '<div class="sc-t"><b>TEMPORADA ' + n + '</b>' +
+          '<span>SEMESTRE ' + info.sem + ' &middot; ' + info.meses + ' ' + info.year + '<br>' + detalle + '</span>' +
+        '</div>' + champ +
+      '</div>' + lista +
     '</div>';
   }
 
   document.getElementById('palmares').innerHTML =
-    '<h2>&#127942; SALON DE TROFEOS</h2>' +
+    '<div class="ph"><i></i><h2>&#127942; SALON DE TROFEOS</h2><i></i></div>' +
     '<p class="sub">CADA TEMPORADA DURA UN SEMESTRE &middot; EL QUE LA GANA SE LLEVA UN SUPER TROFEO</p>' +
     '<div class="cabinet">' + cab + '</div>' + cards;
 }
