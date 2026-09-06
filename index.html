@@ -102,6 +102,32 @@ h1 .era{display:block;font-size:.52em;color:#fff;text-shadow:3px 3px 0 #2a53a8,5
 .gs.has-who b{margin-bottom:3px}
 .gs em{display:block;font-style:normal;font-size:9px;color:var(--fire2);margin-bottom:9px;line-height:1.6;word-break:break-word}
 
+/* temporadas */
+.season-h{padding:18px 14px;margin-bottom:24px;text-align:center}
+.season-h .st{font-size:clamp(11px,3.2vw,15px);color:var(--fire2);letter-spacing:2px;line-height:1.7;text-shadow:3px 3px 0 #b32d00}
+.season-h .ss{font-size:8px;color:var(--dim);margin-top:13px;line-height:1.9}
+.season-h .sb{display:inline-block;font-size:7px;color:#ffb347;background:#3a1f00;border:2px solid #5a3000;padding:5px 8px;margin-top:14px;line-height:1.7}
+
+.palmares{margin-top:36px;padding-top:28px;border-top:4px solid var(--line)}
+.palmares h2{font-size:12px;color:var(--fire2);letter-spacing:2px;margin:0 0 10px;text-align:center;text-shadow:2px 2px 0 rgba(0,0,0,.5)}
+.palmares .sub{font-size:7px;color:var(--dim);text-align:center;margin:0 0 20px;line-height:1.9}
+
+/* vitrina: un casillero por jugador con sus super trofeos */
+.cabinet{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;margin-bottom:24px}
+.cab{padding:14px 8px;text-align:center}
+.cab .cup{font-size:22px;opacity:.16;filter:grayscale(1)}
+.cab.win .cup{opacity:1;filter:none;text-shadow:0 0 14px rgba(255,210,63,.55)}
+.cab .cn{font-size:9px;margin-top:9px;word-break:break-word}
+.cab .cc{font-size:15px;color:var(--dim);margin-top:8px}
+.cab.win .cc{color:var(--fire2)}
+
+/* el trofeo de la temporada, bien a la vista */
+.champ{display:inline-flex;align-items:center;gap:7px;font-size:9px;color:#1a1000;background:var(--fire2);border:3px solid var(--line);padding:6px 9px;margin-left:10px;vertical-align:middle;box-shadow:3px 3px 0 rgba(0,0,0,.45)}
+.champ .cup{font-size:13px;animation:cupUp .9s steps(2,end) infinite}
+@keyframes cupUp{50%{transform:translateY(-2px)}}
+.day.solo .day-h{border-bottom:none;padding-bottom:0;margin-bottom:0}
+.tseason{display:inline-block;font-size:7px;color:var(--dim);background:#1c1c2e;border:2px solid var(--line);padding:3px 7px;margin-left:8px;vertical-align:middle}
+
 /* dias */
 .bar-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
 .btn{
@@ -337,9 +363,11 @@ body.readonly #importBtn{display:none}
   </nav>
 
   <section id="tab-global">
+    <div class="season-h pix" id="seasonHead"></div>
     <div class="podium" id="podium"></div>
     <div class="rank" id="ranking"></div>
     <div class="gstats" id="gstats"></div>
+    <div class="palmares" id="palmares"></div>
   </section>
 
   <section id="tab-grupo" hidden>
@@ -529,18 +557,18 @@ function streakLabel(r){
     const p = pById(h); return p ? p.name : h;
   }).join(', ');
 }
-function globalBestStreak(){
+function globalBestStreak(days){
   let bestLen = 0, bestHolders = [], bestDate = null;
-  state.days.forEach(d => {
+  (days || state.days).forEach(d => {
     const r = longestStreak(d.order);
     if(r.len > bestLen){ bestLen = r.len; bestHolders = r.holders; bestDate = d.date; }
   });
   return { len:bestLen, holders:bestHolders, date:bestDate };
 }
-function totals(){
+function totals(days){
   const t = {};
   allPlayers().forEach(p => t[p.id] = { pts:0, jugadas:0, jornadas:0, ganadas:0 });
-  state.days.forEach(d => {
+  (days || state.days).forEach(d => {
     const w = orderToWins(d.order);
     const tot = dayTotal(d);
     let max = 0;
@@ -567,8 +595,69 @@ function fmt(iso){
   return DIAS[dt.getDay()] + ' ' + parts[2] + ' DE ' + MESES[parts[1]-1] + ' ' + parts[0];
 }
 
+/* una temporada = un semestre. la 1 fue el 2024-02 (jul-dic 2024) y de ahi
+   una cada 6 meses. el que la gana se lleva un super trofeo. */
+const SEASON_Y0 = 2024;
+/* las temporadas 1 a 4 se jugaron antes de que existiera el marcador, asi que
+   el campeon va anotado a mano. si algun dia se cargan jornadas de esas fechas,
+   el campeon se recalcula solo con los datos reales. */
+const SEASON_HISTORY = [
+  { n:1, champion:'sergio' },
+  { n:2, champion:'sergio' },
+  { n:3, champion:'sergio' },
+  { n:4, champion:'sergio' }
+];
+
+function seasonOf(iso){
+  const y = +iso.slice(0,4), m = +iso.slice(5,7);
+  return Math.max(1, (y - SEASON_Y0) * 2 + (m >= 7 ? 1 : 0));
+}
+function seasonInfo(n){
+  const i = n - 1;
+  const year = SEASON_Y0 + Math.floor((i + 1) / 2);
+  const half = (i % 2 === 0) ? 2 : 1; // 1 = ene-jun, 2 = jul-dic
+  return {
+    n:n, year:year, half:half,
+    sem: year + '-0' + half,
+    meses: half === 1 ? 'ENERO - JUNIO' : 'JULIO - DICIEMBRE'
+  };
+}
+function currentSeason(){
+  const t = new Date();
+  return seasonOf(t.getFullYear() + '-' + (t.getMonth() < 9 ? '0' : '') + (t.getMonth() + 1) + '-01');
+}
+function seasonDays(n){
+  return state.days.filter(d => seasonOf(d.date) === n);
+}
+/* campeon de una temporada: el que mas puntos hizo. si hay empate arriba,
+   la temporada queda sin trofeo hasta que lo desempaten */
+function seasonChampion(n){
+  const days = seasonDays(n);
+  if(days.length){
+    const rows = totals(days).filter(r => r.jugadas > 0);
+    const top = rows[0] ? rows[0].pts : 0;
+    const empatados = rows.filter(r => r.pts === top && top > 0);
+    return { pid: empatados.length === 1 ? empatados[0].id : null, rows:rows, days:days };
+  }
+  const h = SEASON_HISTORY.filter(x => x.n === n)[0];
+  return { pid: h ? h.champion : null, rows:[], days:[] };
+}
+/* super trofeos por jugador: solo cuentan las temporadas que ya terminaron */
+function trophyCount(){
+  const cur = currentSeason();
+  const t = {};
+  allPlayers().forEach(p => t[p.id] = 0);
+  for(let n = 1; n < cur; n++){
+    const pid = seasonChampion(n).pid;
+    if(pid && t[pid] !== undefined) t[pid]++;
+  }
+  return t;
+}
+
 function renderGlobal(){
-  const rows = totals();
+  const sn   = currentSeason();
+  const days = seasonDays(sn);
+  const rows = totals(days);
   const maxPts = Math.max(1, rows[0] ? rows[0].pts : 1);
   const medals = ['&#129351;','&#129352;','&#129353;'];
 
@@ -598,17 +687,65 @@ function renderGlobal(){
     '</div>';
   }).join('');
 
-  const partidas = state.days.reduce((s,d) => s + dayTotal(d), 0);
+  const partidas = days.reduce((s,d) => s + dayTotal(d), 0);
   const top = rows[0] ? rows[0].pts : 0;
   const empatados = rows.filter(r => r.pts === top && top > 0);
   const lider = top === 0 ? '-' : (empatados.length > 1 ? 'EMPATE' : empatados[0].name);
-  const bs = globalBestStreak();
+  const bs = globalBestStreak(days);
   document.getElementById('gstats').innerHTML =
     stat(partidas, 'PARTIDAS JUGADAS') +
-    stat(state.days.length, 'JORNADAS') +
+    stat(days.length, 'JORNADAS') +
     stat(lider, 'AL MANDO') +
     stat(top + ' PTS', 'PUNTAJE MAS ALTO') +
     statStreak(bs);
+
+  renderSeasonHead(sn);
+  renderPalmares(sn);
+}
+function renderSeasonHead(n){
+  const info = seasonInfo(n);
+  document.getElementById('seasonHead').innerHTML =
+    '<div class="st">&#127942; GLOBAL &middot; TEMPORADA ' + n + '</div>' +
+    '<div class="ss">SEMESTRE ' + info.sem + ' &middot; ' + info.meses + ' ' + info.year + '</div>' +
+    '<div class="sb">&#9203; EN JUEGO &middot; EL 1RO SE LLEVA EL SUPER TROFEO</div>';
+}
+/* vitrina de trofeos + las temporadas que ya se cerraron */
+function renderPalmares(cur){
+  const tro = trophyCount();
+  const gente = PLAYERS.concat((state.customPlayers || []).filter(p => tro[p.id]));
+  const cab = gente.map(p => Object.assign({}, p, { t:tro[p.id] || 0 }))
+    .sort((a,b) => b.t - a.t || a.name.localeCompare(b.name))
+    .map(r => '<div class="cab pix' + (r.t ? ' win' : '') + '">' +
+      '<div class="cup">&#127942;</div>' +
+      '<div class="cn" style="color:' + r.color + '">' + r.name + '</div>' +
+      '<div class="cc">x' + r.t + '</div>' +
+    '</div>').join('');
+
+  let cards = '';
+  for(let n = cur - 1; n >= 1; n--){
+    const info = seasonInfo(n);
+    const c = seasonChampion(n);
+    const p = c.pid ? pById(c.pid) : null;
+    const champ = p
+      ? '<span class="champ"><span class="cup">&#127942;</span>' + p.name + '</span>'
+      : '<span class="closed-badge">SIN CAMPEON</span>';
+    const jugadas = c.days.reduce((s,d) => s + dayTotal(d), 0);
+    const detalle = c.days.length
+      ? c.days.length + ' JORNADAS &middot; ' + jugadas + ' PARTIDAS'
+      : 'SIN REGISTRO &middot; ANOTADA A MANO';
+    const lista = c.rows.length ? '<div class="mlist">' + rankRowsHTML(c.rows) + '</div>' : '';
+    cards += '<div class="day pix' + (lista ? '' : ' solo') + '">' +
+      '<div class="day-h"><div>' +
+        '<div class="day-d">TEMPORADA ' + n + champ + '</div>' +
+        '<div class="day-s">SEMESTRE ' + info.sem + ' &middot; ' + info.meses + ' ' + info.year + ' &middot; ' + detalle + '</div>' +
+      '</div></div>' + lista +
+    '</div>';
+  }
+
+  document.getElementById('palmares').innerHTML =
+    '<h2>&#127942; SALON DE TROFEOS</h2>' +
+    '<p class="sub">CADA TEMPORADA DURA UN SEMESTRE &middot; EL QUE LA GANA SE LLEVA UN SUPER TROFEO</p>' +
+    '<div class="cabinet">' + cab + '</div>' + cards;
 }
 function stat(v, l){
   return '<div class="gs pix"><b>' + v + '</b><span>' + l + '</span></div>';
@@ -740,7 +877,7 @@ function renderMonths(){
     const actualBadge = (k === hoyKey) ? '<span class="closed-badge">&#9203; MES ACTUAL</span>' : '';
     return '<div class="day pix">' +
       '<div class="day-h"><div>' +
-        '<div class="day-d">' + monthLabel(k) + actualBadge + '</div>' +
+        '<div class="day-d">' + monthLabel(k) + '<span class="tseason">T' + seasonOf(k + '-01') + '</span>' + actualBadge + '</div>' +
         '<div class="day-s">' + dds.length + ' JORNADAS &middot; ' + partidas + ' PARTIDAS &middot; RACHA: ' + rachaTxt + '</div>' +
       '</div></div>' +
       '<div class="mlist">' + filas + '</div>' +
